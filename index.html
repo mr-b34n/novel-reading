@@ -29,18 +29,25 @@ body.dark-theme{
   --accent:#e8d4a8;
 }
 .floating-menu-btn{
-  position:fixed;bottom:20px;left:20px;width:50px;height:50px;
+  position:fixed;bottom:20px;left:20px;width:54px;height:54px;
   border-radius:50%;background:var(--gold);color:#1a1612;
-  border:none;box-shadow:0 4px 12px rgba(0,0,0,.25);
+  border:none;box-shadow:0 4px 16px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center;
-  font-size:24px;cursor:pointer;z-index:140;
+  font-size:20px;cursor:pointer;z-index:160;
   transition:transform .2s,background .2s;
+  padding:0;overflow:visible;
 }
-.floating-menu-btn:hover{background:var(--gold2);transform:scale(1.05)}
+.floating-menu-btn:hover{background:var(--gold2);transform:scale(1.06)}
+.fmb-inner{position:relative;width:54px;height:54px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fmb-pct{position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:#1a1612;color:var(--gold);font-size:9px;font-weight:600;padding:1px 5px;border-radius:8px;white-space:nowrap;line-height:1.5;pointer-events:none;opacity:0;transition:opacity .2s}
+.sidebar.mobile-open ~ .reader .fmb-pct,.fmb-pct.vis{opacity:1}
+.fmb-ring{position:absolute;inset:0;pointer-events:none}
+.fmb-ring circle{transition:stroke-dashoffset .4s ease}
 
 /* BUTTONS */
-.btn-ghost{background:transparent;border:.5px solid #5a4e42;color:#c9a96e;padding:5px 12px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
-.btn-ghost:hover{background:#2a2218;border-color:#c9a96e}
+.btn-ghost{background:var(--paper3);border:.5px solid var(--paper3);color:var(--ink2);padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;transition:all .15s;min-width:110px}
+.btn-ghost:active{opacity:.7}
+.btn-ghost:hover{background:var(--gold3);border-color:var(--gold);color:var(--accent)}
 
 /* LAYOUT */
 .main{display:flex;flex:1;overflow:hidden}
@@ -88,46 +95,60 @@ body.dark-theme{
 
 /* PANELS WRAP */
 .panels-wrap{display:flex;flex:1;overflow:hidden;position:relative}
-.reader-content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg-reader)}
+.reader-content{flex:1;overflow-y:auto;padding:28px 32px 100px;background:var(--bg-reader);scrollbar-width:none}
+.reader-content::-webkit-scrollbar{display:none}
 .chapter-heading{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:5px;line-height:1.3}
 .chapter-sub{font-size:11px;color:var(--gold2);margin-bottom:26px;text-transform:uppercase;letter-spacing:1px}
 .chapter-body{font-family:var(--font-reader);font-size:var(--fs-reader);line-height:var(--lh-reader);color:var(--text-reader);max-width:var(--w-reader)}
-.chapter-body p{margin-bottom:1.2em}
+.chapter-body p{margin-bottom:var(--para-space, 1.2em)}
 .chapter-body.dropcap p:first-child::first-letter{float:left;font-size:52px;line-height:.85;padding:4px 8px 0 0;color:var(--accent);font-weight:600}
 
+/* SIDEBAR TABS */
+.sb-tabs{display:flex;border-bottom:.5px solid var(--paper3);flex-shrink:0;background:var(--paper2)}
+.sb-tab{flex:1;padding:9px 4px;font-size:11px;color:var(--ink3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s}
+.sb-tab i{font-size:16px}
+.sb-tab.active{color:var(--gold);border-bottom:2px solid var(--gold)}
+.sb-pane{display:none;flex:1;overflow-y:auto;scrollbar-width:none}
+.sb-pane::-webkit-scrollbar{display:none}
+.sb-pane.active{display:block}
 /* SETTINGS PANEL IN SIDEBAR */
 .sp-section{padding:12px 14px;border-bottom:.5px solid var(--paper3)}
 .sp-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
 .sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:6px}
-.sp-row label{font-size:12.5px;color:var(--ink2);white-space:nowrap}
-.sp-row input[type=number]{width:55px;background:var(--paper3);border:1px solid transparent;color:var(--ink);padding:4px 6px;border-radius:4px;text-align:center;font-size:13px;font-family:'Inter',sans-serif;outline:none;-moz-appearance:textfield}
-.sp-row input[type=number]:focus{border-color:var(--gold)}
-.sp-row input[type=number]::-webkit-outer-spin-button,.sp-row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sp-row label{font-size:12.5px;color:var(--ink2);white-space:nowrap;flex:1}
+.sp-num{width:58px;background:var(--paper3);border:1px solid transparent;color:var(--ink);padding:5px 6px;border-radius:6px;text-align:center;font-size:13px;font-family:'Inter',sans-serif;outline:none;-moz-appearance:textfield}
+.sp-num:focus{border-color:var(--gold)}
+.sp-num::-webkit-outer-spin-button,.sp-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .font-btns{display:flex;gap:5px;flex-wrap:wrap}
-.font-btn{padding:4px 9px;border:.5px solid var(--paper3);border-radius:5px;font-size:11.5px;cursor:pointer;background:var(--paper);color:var(--ink2)}
+.font-btn{padding:5px 10px;border:.5px solid var(--paper3);border-radius:6px;font-size:12px;cursor:pointer;background:var(--paper);color:var(--ink2);transition:all .12s}
 .font-btn:hover,.font-btn.active{background:var(--gold3);border-color:var(--gold);color:var(--accent)}
-.bg-swatches{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
-.swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent}
-.swatch.active{border-color:var(--gold)}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-.toggle-row label{font-size:12.5px;color:var(--ink2)}
-.toggle{appearance:none;width:36px;height:20px;background:var(--paper3);border-radius:10px;cursor:pointer;position:relative;transition:background .15s;flex-shrink:0}
+.bg-swatches{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2.5px solid var(--paper3);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);transition:transform .15s,border-color .15s}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),inset 0 0 0 1px rgba(0,0,0,.15);transform:scale(1.12)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0}
+.toggle-row+.toggle-row{border-top:.5px solid var(--paper3)}
+.toggle-row label{font-size:13px;color:var(--ink2);cursor:pointer}
+.toggle{appearance:none;width:38px;height:22px;background:var(--paper3);border-radius:11px;cursor:pointer;position:relative;transition:background .15s;flex-shrink:0}
 .toggle:checked{background:var(--gold)}
-.toggle::after{content:'';position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:3px;transition:left .15s}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle:checked::after{left:19px}
-.bm-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:.5px solid var(--paper3)}
+.bm-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:.5px solid var(--paper3)}
 .bm-item:last-child{border-bottom:none}
-.bm-link{font-size:12px;color:var(--accent);cursor:pointer}
-.bm-del{font-size:16px;color:var(--ink3);cursor:pointer;background:none;border:none;line-height:1}
-.chapter-select{width:100%;padding:8px 10px;background:var(--paper3);border:1px solid transparent;color:var(--ink);border-radius:6px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer}
+.bm-link{font-size:12px;color:var(--accent);cursor:pointer;flex:1;margin-right:8px}
+.bm-del{font-size:17px;color:var(--ink3);cursor:pointer;background:none;border:none;line-height:1;padding:2px}
+.chapter-select{width:100%;padding:9px 10px;background:var(--paper3);border:1.5px solid transparent;color:var(--ink);border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer}
 .chapter-select:focus{border-color:var(--gold)}
-
-/* TTS SECTION IN SETTINGS */
-.tts-voice-list{max-height:100px;overflow-y:auto;margin-top:6px;border:.5px solid var(--paper3);border-radius:6px}
-.voice-item{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--ink2);border-bottom:.5px solid var(--paper3)}
+/* TTS SECTION */
+.tts-voice-list{max-height:120px;overflow-y:auto;margin-top:6px;border:.5px solid var(--paper3);border-radius:6px;scrollbar-width:none}
+.tts-voice-list::-webkit-scrollbar{display:none}
+.voice-item{padding:7px 10px;font-size:12px;cursor:pointer;color:var(--ink2);border-bottom:.5px solid var(--paper3)}
 .voice-item:last-child{border-bottom:none}
 .voice-item:hover{background:var(--paper3)}
 .voice-item.active{background:var(--gold3);color:var(--accent)}
+/* select styling */
+.sp-select{width:100%;padding:7px 10px;background:var(--paper3);border:1px solid transparent;color:var(--ink);border-radius:6px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer;margin-top:4px}
+.sp-select:focus{border-color:var(--gold)}
 
 /* UPLOAD MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(26,22,18,.75);display:none;align-items:center;justify-content:center;z-index:200}
@@ -177,130 +198,210 @@ body.dark-theme{
 
 /* MOBILE */
 @media(max-width:640px){
-  .reader-content{padding:20px 16px}
+  .reader-content{padding:20px 16px 100px}
   .tts-bar{flex-wrap:wrap;gap:6px;padding:8px 12px}
   .tts-voice-sel{max-width:90px}
   .chapter-heading{font-size:18px}
   .chapter-body.dropcap p:first-child::first-letter{font-size:40px}
+  .btn-ghost{padding:10px 14px;font-size:13px;min-width:90px}
 }
 </style>
 </head>
 <body>
 
 <div class="main">
-  <button class="floating-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menu">
-    <i class="ti ti-menu-2"></i>
+  <!-- FLOATING MENU BUTTON WITH PROGRESS RING -->
+  <button class="floating-menu-btn" id="floatingBtn" onclick="toggleMobileSidebar()" aria-label="Menu">
+    <div class="fmb-inner">
+      <svg class="fmb-ring" viewBox="0 0 54 54" width="54" height="54">
+        <circle cx="27" cy="27" r="24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+        <circle id="fmbProgressCircle" cx="27" cy="27" r="24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="3"
+          stroke-dasharray="150.8" stroke-dashoffset="150.8" stroke-linecap="round"
+          transform="rotate(-90 27 27)"/>
+      </svg>
+      <i class="ti ti-menu-2" style="position:absolute"></i>
+    </div>
+    <span class="fmb-pct" id="fmbPctLabel">0%</span>
   </button>
 
   <!-- SIDEBAR (MODAL) -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="book-title" id="bookTitle">Chưa có truyện nào</div>
-      <div class="book-info" id="bookInfo">Tải lên file .txt để bắt đầu</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-label" id="progressLabel">0% đã đọc</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div class="book-title" id="bookTitle">Chưa có truyện nào</div>
+          <div class="book-info" id="bookInfo">Tải lên file .txt để bắt đầu</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
+          <span id="progressLabel" style="font-size:11px;color:var(--gold2);font-weight:600">0%</span>
+          <button class="icon-btn" id="bmkBtn" onclick="toggleBookmark()" title="Bookmark" style="width:28px;height:28px;font-size:14px"><i class="ti ti-bookmark"></i></button>
+          <button onclick="closeMobileSidebar()" style="background:none;border:none;color:var(--ink3);font-size:20px;cursor:pointer;padding:2px;line-height:1">&times;</button>
+        </div>
+      </div>
+      <div class="progress-bar" style="margin-top:8px"><div class="progress-fill" id="progressFill"></div></div>
     </div>
-    
-    <div class="sidebar-content" style="flex:1;overflow-y:auto">
-      <div class="sp-section" style="border-bottom:.5px solid var(--paper3)">
-        <div class="sp-label" style="margin-bottom:8px">Chương</div>
+
+    <!-- TABS -->
+    <div class="sb-tabs">
+      <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap">
+        <i class="ti ti-list"></i><span>Chương</span>
+      </button>
+      <button class="sb-tab" onclick="switchTab('read',this)" id="tabRead">
+        <i class="ti ti-text-size"></i><span>Đọc</span>
+      </button>
+      <button class="sb-tab" onclick="switchTab('tts',this)" id="tabTts">
+        <i class="ti ti-volume"></i><span>TTS</span>
+      </button>
+      <button class="sb-tab" onclick="switchTab('bm',this)" id="tabBm">
+        <i class="ti ti-bookmark"></i><span>BM</span>
+      </button>
+    </div>
+
+    <!-- TAB: CHAPTER -->
+    <div class="sb-pane active" id="paneChap">
+      <div class="sp-section">
+        <div class="sp-label" style="margin-bottom:8px">Chương hiện tại</div>
         <select id="chapterSelect" class="chapter-select" onchange="loadChapter(parseInt(this.value));closeMobileSidebar()">
           <option value="-1">Chưa có truyện nào</option>
         </select>
       </div>
+      <div class="sp-section" style="display:flex;gap:8px;padding:10px 14px">
+        <button class="btn-ghost" style="flex:1;min-width:0;padding:8px;font-size:13px" onclick="if(S.currentChapter>0){loadChapter(S.currentChapter-1);closeMobileSidebar()}">
+          &#8592; Trước
+        </button>
+        <button class="btn-ghost" style="flex:1;min-width:0;padding:8px;font-size:13px" onclick="if(S.currentChapter<S.chapters.length-1){loadChapter(S.currentChapter+1);closeMobileSidebar()}">
+          Sau &#8594;
+        </button>
+      </div>
+    </div>
 
-      <!-- FONT & LAYOUT -->
+    <!-- TAB: READING SETTINGS -->
+    <div class="sb-pane" id="paneRead">
       <div class="sp-section">
-        <div class="sp-label">Cỡ chữ</div>
+        <div class="sp-label">Điều chỉnh văn bản</div>
         <div class="sp-row">
-          <label style="font-size:11px">A</label>
-          <input type="number" min="13" max="72" value="17" id="fontSizeSlider" oninput="updateFont()">
+          <label>Cỡ chữ (px)</label>
+          <input type="number" class="sp-num" min="13" max="72" value="17" id="fontSizeSlider" oninput="updateFont()">
         </div>
-        <div class="sp-label" style="margin-top:7px">Khoảng cách dòng</div>
         <div class="sp-row">
-          <label>≡</label>
-          <input type="number" min="1.0" max="3.0" step="0.1" value="1.9" id="lineHSlider" oninput="updateFont()">
+          <label>Giãn dòng</label>
+          <input type="number" class="sp-num" min="1.0" max="3.5" step="0.1" value="1.9" id="lineHSlider" oninput="updateFont()">
         </div>
-        <div class="sp-label" style="margin-top:7px">Độ rộng</div>
         <div class="sp-row">
-          <label>↔</label>
-          <input type="number" min="300" max="1200" step="10" value="680" id="widthSlider" oninput="updateFont()">
+          <label>Độ rộng (px)</label>
+          <input type="number" class="sp-num" min="300" max="1400" step="10" value="680" id="widthSlider" oninput="updateFont()">
+        </div>
+        <div class="sp-row">
+          <label>Lề trong (px)</label>
+          <input type="number" class="sp-num" min="8" max="60" step="2" value="32" id="paddingSlider" oninput="updateFont()">
+        </div>
+        <div class="sp-row">
+          <label>Cách đoạn (em)</label>
+          <input type="number" class="sp-num" min="0.5" max="3.0" step="0.1" value="1.2" id="paraSpaceSlider" oninput="updateFont()">
         </div>
       </div>
-
-      <!-- FONT FAMILY -->
       <div class="sp-section">
         <div class="sp-label">Font chữ</div>
         <div class="font-btns">
           <button class="font-btn active" onclick="setFont('Lora',this)">Lora</button>
           <button class="font-btn" onclick="setFont('Georgia',this)">Georgia</button>
           <button class="font-btn" onclick="setFont('Inter',this)">Sans</button>
-          <button class="font-btn" onclick="setFont('palatino',this)">Palatino</button>
+          <button class="font-btn" onclick="setFont('Palatino Linotype',this)">Palatino</button>
         </div>
       </div>
-
-      <!-- BG COLOR -->
       <div class="sp-section">
-        <div class="sp-label">Màu nền</div>
+        <div class="sp-label">Màu nền trang đọc</div>
         <div class="bg-swatches">
-          <div class="swatch active" style="background:#faf7f2;border-color:transparent" title="Giấy" onclick="setBg('#faf7f2','#1a1612',this)"></div>
-          <div class="swatch" style="background:#1a1a2e" title="Tối đêm" onclick="setBg('#1a1a2e','#d4cfc8',this)"></div>
-          <div class="swatch" style="background:#2a2010" title="Nâu" onclick="setBg('#2a2010','#e8d4a8',this)"></div>
-          <div class="swatch" style="background:#fff" title="Trắng" onclick="setBg('#fff','#1a1612',this)"></div>
-          <div class="swatch" style="background:#f0e6d0" title="Sepia" onclick="setBg('#f0e6d0','#2a1a08',this)"></div>
-          <div class="swatch" style="background:#0d1117" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
+          <div class="swatch active" data-bg="#faf7f2" data-fg="#1a1612" style="background:#faf7f2" title="Giấy" onclick="setBg('#faf7f2','#1a1612',this)"></div>
+          <div class="swatch" data-bg="#fff" data-fg="#1a1612" style="background:#fff" title="Trắng" onclick="setBg('#fff','#1a1612',this)"></div>
+          <div class="swatch" data-bg="#f0e6d0" data-fg="#2a1a08" style="background:#f0e6d0" title="Sepia" onclick="setBg('#f0e6d0','#2a1a08',this)"></div>
+          <div class="swatch" data-bg="#1a1a2e" data-fg="#d4cfc8" style="background:#1a1a2e" title="Tối xanh" onclick="setBg('#1a1a2e','#d4cfc8',this)"></div>
+          <div class="swatch" data-bg="#2a2010" data-fg="#e8d4a8" style="background:#2a2010" title="Nâu" onclick="setBg('#2a2010','#e8d4a8',this)"></div>
+          <div class="swatch" data-bg="#0d1117" data-fg="#c9d1d9" style="background:#0d1117;border-color:#555" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
         </div>
       </div>
-
-      <!-- TOGGLES -->
       <div class="sp-section">
+        <div class="sp-label">Tùy chỉnh</div>
         <div class="toggle-row">
-          <label>Giao diện tối</label>
+          <label for="globalDarkToggle">Giao diện tối</label>
           <input type="checkbox" class="toggle" id="globalDarkToggle" onchange="toggleGlobalDark()">
         </div>
-        <div class="toggle-row" style="margin-top:8px">
-          <label>Chữ hoa đầu đoạn</label>
+        <div class="toggle-row">
+          <label for="dropcapToggle">Chữ hoa đầu đoạn</label>
           <input type="checkbox" class="toggle" checked id="dropcapToggle" onchange="loadChapter(S.currentChapter)">
         </div>
-        <div class="toggle-row" style="margin-top:8px">
-          <label>Làm nổi từ đang đọc</label>
+        <div class="toggle-row">
+          <label for="highlightToggle">Làm nổi từ TTS</label>
           <input type="checkbox" class="toggle" checked id="highlightToggle">
         </div>
-      </div>
-
-      <!-- TTS VOICES -->
-      <div class="sp-section">
-        <div class="sp-label">Giọng đọc tiếng Việt</div>
-        <div id="voiceListEl" style="font-size:12px;color:var(--ink3)">Đang tải danh sách giọng đọc...</div>
-        <div style="margin-top:8px">
-          <div class="sp-label">Âm lượng</div>
-          <div class="sp-row">
-            <label><i class="ti ti-volume" style="font-size:14px"></i></label>
-            <input type="number" min="0" max="1" step="0.1" value="1" id="volSlider" oninput="changeVol(this.value)">
-          </div>
-          <div class="sp-label" style="margin-top:6px">Cao độ</div>
-          <div class="sp-row">
-            <label><i class="ti ti-music" style="font-size:14px"></i></label>
-            <input type="number" min="0.5" max="2" step="0.1" value="1" id="pitchSlider" oninput="changePitch(this.value)">
-          </div>
+        <div class="toggle-row">
+          <label for="justifyToggle">Căn đều 2 bên</label>
+          <input type="checkbox" class="toggle" id="justifyToggle" onchange="updateFont()">
         </div>
       </div>
+    </div>
 
-      <!-- BOOKMARKS -->
+    <!-- TAB: TTS -->
+    <div class="sb-pane" id="paneTts">
       <div class="sp-section">
-        <div class="sp-label">Bookmark</div>
+        <div class="sp-label">Bật/Tắt TTS</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost" style="flex:1;padding:8px;font-size:13px" onclick="toggleTtsBar()" id="ttsToggleBtn">
+            <i class="ti ti-volume"></i> Bật TTS
+          </button>
+          <button class="btn-ghost" style="flex:1;padding:8px;font-size:13px" onclick="togglePlay()">
+            <i class="ti ti-player-play" id="ttsPlayIcon2"></i> Phát
+          </button>
+        </div>
+      </div>
+      <div class="sp-section">
+        <div class="sp-label">Tốc độ</div>
+        <select class="sp-select" id="ttsRateSel" onchange="changeRate(this.value)">
+          <option value="0.5">0.5× (Rất chậm)</option>
+          <option value="0.75">0.75× (Chậm)</option>
+          <option value="1" selected>1× (Bình thường)</option>
+          <option value="1.25">1.25× (Nhanh)</option>
+          <option value="1.5">1.5× (Nhanh hơn)</option>
+          <option value="1.75">1.75×</option>
+          <option value="2">2× (Rất nhanh)</option>
+        </select>
+      </div>
+      <div class="sp-section">
+        <div class="sp-row">
+          <label>Âm lượng</label>
+          <input type="number" class="sp-num" min="0" max="1" step="0.1" value="1" id="volSlider" oninput="changeVol(this.value)">
+        </div>
+        <div class="sp-row" style="margin-top:6px">
+          <label>Cao độ</label>
+          <input type="number" class="sp-num" min="0.5" max="2" step="0.1" value="1" id="pitchSlider" oninput="changePitch(this.value)">
+        </div>
+      </div>
+      <div class="sp-section">
+        <div class="sp-label">Giọng đọc tiếng Việt</div>
+        <div id="voiceListEl" style="font-size:12px;color:var(--ink3)">Đang tải...</div>
+      </div>
+    </div>
+
+    <!-- TAB: BOOKMARKS -->
+    <div class="sb-pane" id="paneBm">
+      <div class="sp-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="sp-label" style="margin-bottom:0">Bookmark</div>
+          <button class="icon-btn" onclick="toggleBookmark()" style="width:26px;height:26px;font-size:13px" title="Thêm bookmark"><i class="ti ti-plus"></i></button>
+        </div>
         <div id="bookmarkList" style="font-size:12px;color:var(--ink3)">Chưa có bookmark nào</div>
       </div>
     </div>
 
     <div class="sidebar-footer">
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-        <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTtsBar();closeMobileSidebar();" title="Text-to-Speech"><i class="ti ti-volume"></i></button>
-        <button class="icon-btn" id="bmkBtn" onclick="toggleBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></button>
+      <div style="display:flex;gap:8px">
+        <button class="upload-btn" onclick="openUpload()" style="flex:1">
+          <i class="ti ti-upload"></i> Tải sách mới
+        </button>
+        <button class="upload-btn" onclick="confirmClearBook()" title="Xóa sách khỏi bộ nhớ" style="background:var(--paper3);color:var(--ink2);flex:0 0 auto;width:auto;padding:8px 12px">
+          <i class="ti ti-trash"></i>
+        </button>
       </div>
-      <button class="upload-btn" onclick="openUpload()">
-        <i class="ti ti-upload"></i> Tải lên sách mới
-      </button>
     </div>
   </div>
 
@@ -416,19 +517,87 @@ const S = {
 
 
 
+// ===================== INDEXEDDB PERSISTENCE =====================
+const DB_NAME = 'NovReaderDB', DB_VER = 1, STORE = 'books';
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, {keyPath:'id'});
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function saveBook(name, chapters){
+  try{
+    const db = await openDB();
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put({id:'current', name, chapters});
+  } catch(e){ console.warn('IndexedDB save failed', e); }
+}
+async function loadSavedBook(){
+  try{
+    const db = await openDB();
+    return await new Promise((res,rej)=>{
+      const req = db.transaction(STORE,'readonly').objectStore(STORE).get('current');
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => rej(req.error);
+    });
+  } catch(e){ return null; }
+}
+async function clearSavedBook(){
+  try{
+    const db = await openDB();
+    db.transaction(STORE,'readwrite').objectStore(STORE).delete('current');
+  } catch(e){ console.warn('IndexedDB clear failed', e); }
+}
+
 // ===================== INIT =====================
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   if (S.globalDark) {
     document.body.classList.add('dark-theme');
     document.getElementById('globalDarkToggle').checked = true;
   }
-  renderChapterList();
   initTTS();
   
+  // Set up scroll listener for progress ring
+  const rc = document.getElementById('readerContent');
+  if(rc){
+    rc.addEventListener('scroll', () => {
+      const ring = document.getElementById('fmbProgressCircle');
+      const pctLabel = document.getElementById('fmbPctLabel');
+      if(!ring || !pctLabel) return;
+      const scrollH = rc.scrollHeight - rc.clientHeight;
+      if(scrollH <= 0){
+        ring.style.strokeDashoffset = 0;
+        pctLabel.textContent = '100%';
+        return;
+      }
+      const pct = (rc.scrollTop / scrollH);
+      // dash array is ~150.8
+      ring.style.strokeDashoffset = 150.8 - (150.8 * pct);
+      pctLabel.textContent = Math.round(pct * 100) + '%';
+    });
+  }
+
+  // Restore book from IndexedDB
+  const saved = await loadSavedBook();
+  if(saved && saved.chapters && saved.chapters.length){
+    S.chapters = saved.chapters;
+    S.bookTitle = saved.name;
+    let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + saved.name) || '0');
+    S.currentChapter = savedIdx < saved.chapters.length ? savedIdx : 0;
+    document.getElementById('bookTitle').textContent = saved.name;
+    document.getElementById('bookInfo').textContent = `${saved.chapters.length} chương`;
+    renderChapterList();
+    loadChapter(S.currentChapter);
+    showToast(`Đã khôi phục “${saved.name}”`);
+  } else {
+    renderChapterList();
+  }
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('SW reg failed', err));
   }
-  // Close drive panel on outside click
   document.addEventListener('click', e => {
     if(!document.getElementById('drivePanel').contains(e.target) &&
        !e.target.closest('.icon-btn[onclick*="toggleDrive"]')){
@@ -483,17 +652,24 @@ function loadChapter(idx){
     <div style="max-width:${S.width}px;margin:0 auto">
       <div class="chapter-heading">${ch.title}</div>
       ${ch.subtitle?`<div class="chapter-sub">${ch.subtitle}</div>`:''}
-      <div class="chapter-body${dropcap?' dropcap':''}" style="font-family:${S.font},serif;font-size:${S.fontSize}px;line-height:${S.lineH};color:${S.textColor}">
+      <div class="chapter-body${dropcap?' dropcap':''}" style="font-family:${S.font},serif;font-size:${S.fontSize}px;line-height:${S.lineH};color:${S.textColor};text-align:${S.justify?'justify':'left'}">
         ${bodyHtml}
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:.5px solid var(--paper3)">
-        <button class="btn-ghost" onclick="prevChapter()" style="${idx===0?'visibility:hidden':''}">Chương trước</button>
-        <button class="btn-ghost" onclick="nextChapter()" style="${idx===S.chapters.length-1?'visibility:hidden':''}">Chương sau</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:20px;border-top:.5px solid var(--paper3)">
+        ${idx>0?`<button class="btn-ghost" onclick="prevChapter()">&#8592; Chương trước</button>`:'<span></span>'}
+        <span style="font-size:11px;color:var(--ink3)">${idx+1} / ${S.chapters.length}</span>
+        ${idx<S.chapters.length-1?`<button class="btn-ghost" onclick="nextChapter()">Chương sau &#8594;</button>`:'<span></span>'}
       </div>
     </div>`;
   S.ttsWords = wordSpans;
   S.ttsCursor = 0;
   updateTtsProgress();
+  // Update font settings including padding
+  updateFont();
+  // Scroll reader back to top
+  rc.scrollTop = 0;
+  // Trigger scroll event manually to update ring
+  rc.dispatchEvent(new Event('scroll'));
   const sel = document.getElementById('chapterSelect');
   if(sel) sel.value = idx;
   updateBmkBtn();
@@ -697,14 +873,37 @@ function updateFont(){
   S.fontSize = document.getElementById('fontSizeSlider').value;
   S.lineH = document.getElementById('lineHSlider').value;
   S.width = document.getElementById('widthSlider').value;
+  S.padding = document.getElementById('paddingSlider').value;
+  S.paraSpace = document.getElementById('paraSpaceSlider').value;
+  S.justify = document.getElementById('justifyToggle').checked;
+  
   const body = document.querySelector('.chapter-body');
   if(body){
     body.style.fontFamily = S.font+',serif';
     body.style.fontSize = S.fontSize+'px';
     body.style.lineHeight = S.lineH;
+    body.style.textAlign = S.justify ? 'justify' : 'left';
+    body.style.setProperty('--para-space', S.paraSpace + 'em');
   }
-  const wrap = document.querySelector('#readerContent > div');
+  const wrap = document.querySelector('#readerContent > div:first-child');
   if(wrap) wrap.style.maxWidth = S.width+'px';
+  const rc = document.getElementById('readerContent');
+  if(rc) {
+    if(window.innerWidth > 640){
+      rc.style.padding = `28px ${S.padding}px 100px`;
+    } else {
+      rc.style.padding = `20px ${Math.max(16, S.padding-16)}px 100px`;
+    }
+  }
+}
+
+// ===================== TABS =====================
+function switchTab(tabId, el){
+  document.querySelectorAll('.sb-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sb-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const pane = document.getElementById('pane' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+  if(pane) pane.classList.add('active');
 }
 
 function setFont(f, el){
@@ -937,7 +1136,6 @@ function doParse(text, name){
         matchCount++;
         matchedTitles.push(t.slice(0, 60));
         if(current){ current.content = buf.join('\n\n').trim(); chapters.push(current); }
-        // Dùng splitTitleSubtitle thay vì split cứng bằng dấu :
         const { title, subtitle } = splitTitleSubtitle(t, S.sepMode);
         current = { title, subtitle, content: '' };
         buf = [];
@@ -947,9 +1145,6 @@ function doParse(text, name){
     }
   }
   if(current){ current.content = buf.join('\n\n').trim(); chapters.push(current); }
-
-  // Kiểm tra các chương bị lọc bỏ
-  const emptyChaps = chapters.filter(ch => ch.content.length <= 10);
 
   const validChapters = chapters.filter(ch => ch.content.length > 10);
 
@@ -968,6 +1163,7 @@ function doParse(text, name){
   document.getElementById('bookInfo').textContent = `${validChapters.length} chương`;
   renderChapterList();
   loadChapter(S.currentChapter);
+  saveBook(name, validChapters); // persist to IndexedDB
   closeUpload();
   showToast(`Đã tải "${name}" — ${validChapters.length} chương`);
 }
@@ -983,6 +1179,31 @@ function openMobileSidebar(){
 function closeMobileSidebar(){
   S.mobileOpen = false;
   document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function confirmClearBook(){
+  if(!S.chapters.length){ showToast('Chưa có sách nào trong bộ nhớ'); return; }
+  if(!confirm(`Xóa "${S.bookTitle}" khỏi bộ nhớ?`)){ return; }
+  clearSavedBook();
+  if(S.bookTitle) localStorage.removeItem('novreader_pos_' + S.bookTitle);
+  S.chapters = []; S.bookTitle = ''; S.currentChapter = 0;
+  stopTts();
+  document.getElementById('bookTitle').textContent = 'Chưa có truyện nào';
+  document.getElementById('bookInfo').textContent = 'Tải lên file .txt để bắt đầu';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressLabel').textContent = '0% đã đọc';
+  document.getElementById('readerContent').innerHTML = `
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-icon">📚</div>
+      <h2>Chào mừng đến với NovReader</h2>
+      <p>Tải lên file .txt để bắt đầu đọc sách với hỗ trợ Text-to-Speech</p>
+      <button class="upload-btn" style="width:auto;padding:9px 22px" onclick="openUpload()">
+        <i class="ti ti-upload"></i> Tải lên ngay
+      </button>
+    </div>`;
+  renderChapterList();
+  closeMobileSidebar();
+  showToast('Đã xóa sách khỏi bộ nhớ');
 }
 
 // ===================== TOAST =====================

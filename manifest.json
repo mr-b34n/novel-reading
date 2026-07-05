@@ -1,0 +1,17 @@
+{
+  "name": "NovReader",
+  "short_name": "NovReader",
+  "description": "Trình duyệt đọc truyện offline",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#1a1612",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

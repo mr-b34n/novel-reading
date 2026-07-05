@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>NovReader</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1612">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -21,22 +22,32 @@
 }
 html,body{height:100%;overflow:hidden}
 body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);display:flex;flex-direction:column}
+body.dark-theme{
+  --ink:#e8d4a8;--ink2:#c9a96e;--ink3:#8a8480;
+  --paper:#12100e;--paper2:#1a1612;--paper3:#2a2218;
+  --gold:#c9a96e;--gold2:#a8803e;--gold3:#2a2218;
+  --accent:#e8d4a8;
+}
+.floating-menu-btn{
+  position:fixed;bottom:20px;left:20px;width:50px;height:50px;
+  border-radius:50%;background:var(--gold);color:#1a1612;
+  border:none;box-shadow:0 4px 12px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer;z-index:140;
+  transition:transform .2s,background .2s;
+}
+.floating-menu-btn:hover{background:var(--gold2);transform:scale(1.05)}
 
-/* NAV */
-.nav{background:#1a1612;color:#e8d4a8;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
-.nav-logo{font-family:'Lora',serif;font-size:19px;letter-spacing:.5px;color:#c9a96e;white-space:nowrap}
-.nav-logo span{font-size:11px;color:#8a7a68;margin-left:5px;font-family:'Inter',sans-serif}
-.nav-right{display:flex;align-items:center;gap:8px}
+/* BUTTONS */
 .btn-ghost{background:transparent;border:.5px solid #5a4e42;color:#c9a96e;padding:5px 12px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
 .btn-ghost:hover{background:#2a2218;border-color:#c9a96e}
-.avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#1a1612;cursor:pointer;flex-shrink:0}
 
 /* LAYOUT */
 .main{display:flex;flex:1;overflow:hidden}
 
 /* SIDEBAR */
-.sidebar{width:230px;background:#f5f0e8;border-right:.5px solid var(--paper3);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s,opacity .2s}
-.sidebar.hidden{width:0;opacity:0;overflow:hidden}
+.sidebar{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);z-index:150;width:90%;max-width:380px;height:80vh;background:var(--paper);border-radius:12px;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 10px 40px rgba(0,0,0,.3);overflow:hidden}
+.sidebar.mobile-open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
 .sidebar-head{padding:14px 14px 10px;border-bottom:.5px solid var(--paper3);flex-shrink:0}
 .book-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:2px;word-break:break-word}
 .book-info{font-size:11px;color:var(--ink3)}
@@ -54,13 +65,6 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 
 /* READER AREA */
 .reader{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.reader-toolbar{background:var(--paper2);border-bottom:.5px solid var(--paper3);padding:0 14px;height:46px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;transition:height .2s,opacity .2s}
-.reader-toolbar.hidden{height:0;opacity:0;overflow:hidden;padding:0}
-.toolbar-nav{display:flex;align-items:center;gap:5px}
-.tb-btn{background:transparent;border:.5px solid var(--paper3);color:var(--ink2);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
-.tb-btn:hover{background:var(--paper3);color:var(--ink)}
-.chapter-pos{font-size:11px;color:var(--ink3);padding:0 6px;white-space:nowrap}
-.toolbar-right{display:flex;align-items:center;gap:5px}
 .icon-btn{background:transparent;border:.5px solid var(--paper3);color:var(--ink2);width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .12s;flex-shrink:0}
 .icon-btn:hover{background:var(--paper3);color:var(--ink)}
 .icon-btn.active{background:var(--gold3);color:var(--accent);border-color:var(--gold)}
@@ -85,24 +89,20 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 /* PANELS WRAP */
 .panels-wrap{display:flex;flex:1;overflow:hidden;position:relative}
 .reader-content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg-reader)}
-.reader-content.focus-mode{padding:40px 60px}
 .chapter-heading{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:5px;line-height:1.3}
 .chapter-sub{font-size:11px;color:var(--gold2);margin-bottom:26px;text-transform:uppercase;letter-spacing:1px}
 .chapter-body{font-family:var(--font-reader);font-size:var(--fs-reader);line-height:var(--lh-reader);color:var(--text-reader);max-width:var(--w-reader)}
 .chapter-body p{margin-bottom:1.2em}
 .chapter-body.dropcap p:first-child::first-letter{float:left;font-size:52px;line-height:.85;padding:4px 8px 0 0;color:var(--accent);font-weight:600}
 
-/* SETTINGS PANEL */
-.settings-panel{width:255px;background:var(--paper2);border-left:.5px solid var(--paper3);overflow-y:auto;flex-shrink:0;display:none}
-.settings-panel.open{display:block}
-.sp-head{padding:12px 14px;border-bottom:.5px solid var(--paper3);font-size:13px;font-weight:500;color:var(--ink);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--paper2);z-index:2}
-.sp-close{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:18px;line-height:1}
+/* SETTINGS PANEL IN SIDEBAR */
 .sp-section{padding:12px 14px;border-bottom:.5px solid var(--paper3)}
 .sp-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
 .sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:6px}
 .sp-row label{font-size:12.5px;color:var(--ink2);white-space:nowrap}
-.sp-row input[type=range]{flex:1;accent-color:var(--gold)}
-.sp-row .val{font-size:11px;color:var(--gold2);min-width:34px;text-align:right}
+.sp-row input[type=number]{width:55px;background:var(--paper3);border:1px solid transparent;color:var(--ink);padding:4px 6px;border-radius:4px;text-align:center;font-size:13px;font-family:'Inter',sans-serif;outline:none;-moz-appearance:textfield}
+.sp-row input[type=number]:focus{border-color:var(--gold)}
+.sp-row input[type=number]::-webkit-outer-spin-button,.sp-row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .font-btns{display:flex;gap:5px;flex-wrap:wrap}
 .font-btn{padding:4px 9px;border:.5px solid var(--paper3);border-radius:5px;font-size:11.5px;cursor:pointer;background:var(--paper);color:var(--ink2)}
 .font-btn:hover,.font-btn.active{background:var(--gold3);border-color:var(--gold);color:var(--accent)}
@@ -119,6 +119,8 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 .bm-item:last-child{border-bottom:none}
 .bm-link{font-size:12px;color:var(--accent);cursor:pointer}
 .bm-del{font-size:16px;color:var(--ink3);cursor:pointer;background:none;border:none;line-height:1}
+.chapter-select{width:100%;padding:8px 10px;background:var(--paper3);border:1px solid transparent;color:var(--ink);border-radius:6px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer}
+.chapter-select:focus{border-color:var(--gold)}
 
 /* TTS SECTION IN SETTINGS */
 .tts-voice-list{max-height:100px;overflow-y:auto;margin-top:6px;border:.5px solid var(--paper3);border-radius:6px}
@@ -175,45 +177,22 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 
 /* MOBILE */
 @media(max-width:640px){
-  .sidebar{position:fixed;left:0;top:52px;bottom:0;z-index:50;width:220px;transform:translateX(-100%);transition:transform .25s;box-shadow:4px 0 16px rgba(0,0,0,.15)}
-  .sidebar.mobile-open{transform:translateX(0)}
-  .sidebar.hidden{width:220px;opacity:1;overflow:visible}
-  .hamburger{display:flex}
   .reader-content{padding:20px 16px}
-  .reader-content.focus-mode{padding:24px 20px}
-  .settings-panel{position:fixed;right:0;top:52px;bottom:0;z-index:50;display:none;width:240px;box-shadow:-4px 0 16px rgba(0,0,0,.12)}
-  .settings-panel.open{display:block}
   .tts-bar{flex-wrap:wrap;gap:6px;padding:8px 12px}
   .tts-voice-sel{max-width:90px}
   .chapter-heading{font-size:18px}
   .chapter-body.dropcap p:first-child::first-letter{font-size:40px}
 }
-@media(min-width:641px){
-  .hamburger{display:none}
-}
-.hamburger{background:transparent;border:none;color:#c9a96e;cursor:pointer;font-size:22px;line-height:1;padding:2px}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav class="nav">
-  <div style="display:flex;align-items:center;gap:10px">
-    <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">
-      <i class="ti ti-menu-2"></i>
-    </button>
-    <div class="nav-logo">📖 NovReader <span>Beta</span></div>
-  </div>
-  <div class="nav-right">
-    <button class="btn-ghost" id="loginBtn" onclick="doLogin()">
-      <i class="ti ti-brand-google" style="font-size:14px;vertical-align:-2px"></i> Đăng nhập
-    </button>
-    <div class="avatar" id="avatarEl" style="display:none" onclick="toggleDrive()">NT</div>
-  </div>
-</nav>
-
 <div class="main">
-  <!-- SIDEBAR -->
+  <button class="floating-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menu">
+    <i class="ti ti-menu-2"></i>
+  </button>
+
+  <!-- SIDEBAR (MODAL) -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div class="book-title" id="bookTitle">Chưa có truyện nào</div>
@@ -221,13 +200,104 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="progress-label" id="progressLabel">0% đã đọc</div>
     </div>
-    <div class="chapter-list" id="chapterList">
-      <div style="padding:24px 14px;text-align:center;color:var(--ink3);font-size:12px;line-height:1.6">
-        <i class="ti ti-books" style="font-size:28px;display:block;margin-bottom:8px;color:var(--paper3)"></i>
-        Chưa có truyện nào.<br>Bấm <strong style="color:var(--gold2)">Tải lên</strong> để thêm sách.
+    
+    <div class="sidebar-content" style="flex:1;overflow-y:auto">
+      <div class="sp-section" style="border-bottom:.5px solid var(--paper3)">
+        <div class="sp-label" style="margin-bottom:8px">Chương</div>
+        <select id="chapterSelect" class="chapter-select" onchange="loadChapter(parseInt(this.value));closeMobileSidebar()">
+          <option value="-1">Chưa có truyện nào</option>
+        </select>
+      </div>
+
+      <!-- FONT & LAYOUT -->
+      <div class="sp-section">
+        <div class="sp-label">Cỡ chữ</div>
+        <div class="sp-row">
+          <label style="font-size:11px">A</label>
+          <input type="number" min="13" max="72" value="17" id="fontSizeSlider" oninput="updateFont()">
+        </div>
+        <div class="sp-label" style="margin-top:7px">Khoảng cách dòng</div>
+        <div class="sp-row">
+          <label>≡</label>
+          <input type="number" min="1.0" max="3.0" step="0.1" value="1.9" id="lineHSlider" oninput="updateFont()">
+        </div>
+        <div class="sp-label" style="margin-top:7px">Độ rộng</div>
+        <div class="sp-row">
+          <label>↔</label>
+          <input type="number" min="300" max="1200" step="10" value="680" id="widthSlider" oninput="updateFont()">
+        </div>
+      </div>
+
+      <!-- FONT FAMILY -->
+      <div class="sp-section">
+        <div class="sp-label">Font chữ</div>
+        <div class="font-btns">
+          <button class="font-btn active" onclick="setFont('Lora',this)">Lora</button>
+          <button class="font-btn" onclick="setFont('Georgia',this)">Georgia</button>
+          <button class="font-btn" onclick="setFont('Inter',this)">Sans</button>
+          <button class="font-btn" onclick="setFont('palatino',this)">Palatino</button>
+        </div>
+      </div>
+
+      <!-- BG COLOR -->
+      <div class="sp-section">
+        <div class="sp-label">Màu nền</div>
+        <div class="bg-swatches">
+          <div class="swatch active" style="background:#faf7f2;border-color:transparent" title="Giấy" onclick="setBg('#faf7f2','#1a1612',this)"></div>
+          <div class="swatch" style="background:#1a1a2e" title="Tối đêm" onclick="setBg('#1a1a2e','#d4cfc8',this)"></div>
+          <div class="swatch" style="background:#2a2010" title="Nâu" onclick="setBg('#2a2010','#e8d4a8',this)"></div>
+          <div class="swatch" style="background:#fff" title="Trắng" onclick="setBg('#fff','#1a1612',this)"></div>
+          <div class="swatch" style="background:#f0e6d0" title="Sepia" onclick="setBg('#f0e6d0','#2a1a08',this)"></div>
+          <div class="swatch" style="background:#0d1117" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
+        </div>
+      </div>
+
+      <!-- TOGGLES -->
+      <div class="sp-section">
+        <div class="toggle-row">
+          <label>Giao diện tối</label>
+          <input type="checkbox" class="toggle" id="globalDarkToggle" onchange="toggleGlobalDark()">
+        </div>
+        <div class="toggle-row" style="margin-top:8px">
+          <label>Chữ hoa đầu đoạn</label>
+          <input type="checkbox" class="toggle" checked id="dropcapToggle" onchange="loadChapter(S.currentChapter)">
+        </div>
+        <div class="toggle-row" style="margin-top:8px">
+          <label>Làm nổi từ đang đọc</label>
+          <input type="checkbox" class="toggle" checked id="highlightToggle">
+        </div>
+      </div>
+
+      <!-- TTS VOICES -->
+      <div class="sp-section">
+        <div class="sp-label">Giọng đọc tiếng Việt</div>
+        <div id="voiceListEl" style="font-size:12px;color:var(--ink3)">Đang tải danh sách giọng đọc...</div>
+        <div style="margin-top:8px">
+          <div class="sp-label">Âm lượng</div>
+          <div class="sp-row">
+            <label><i class="ti ti-volume" style="font-size:14px"></i></label>
+            <input type="number" min="0" max="1" step="0.1" value="1" id="volSlider" oninput="changeVol(this.value)">
+          </div>
+          <div class="sp-label" style="margin-top:6px">Cao độ</div>
+          <div class="sp-row">
+            <label><i class="ti ti-music" style="font-size:14px"></i></label>
+            <input type="number" min="0.5" max="2" step="0.1" value="1" id="pitchSlider" oninput="changePitch(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKMARKS -->
+      <div class="sp-section">
+        <div class="sp-label">Bookmark</div>
+        <div id="bookmarkList" style="font-size:12px;color:var(--ink3)">Chưa có bookmark nào</div>
       </div>
     </div>
+
     <div class="sidebar-footer">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTtsBar();closeMobileSidebar();" title="Text-to-Speech"><i class="ti ti-volume"></i></button>
+        <button class="icon-btn" id="bmkBtn" onclick="toggleBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></button>
+      </div>
       <button class="upload-btn" onclick="openUpload()">
         <i class="ti ti-upload"></i> Tải lên sách mới
       </button>
@@ -236,29 +306,6 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 
   <!-- READER -->
   <div class="reader">
-    <!-- TOOLBAR -->
-    <div class="reader-toolbar" id="readerToolbar" style="display:none">
-      <div class="toolbar-nav">
-        <button class="tb-btn" onclick="prevChapter()"><i class="ti ti-chevron-left"></i> Trước</button>
-        <span class="chapter-pos" id="chapterPos">—</span>
-        <button class="tb-btn" onclick="nextChapter()">Sau <i class="ti ti-chevron-right"></i></button>
-      </div>
-      <div class="toolbar-right">
-        <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTtsBar()" title="Text-to-Speech">
-          <i class="ti ti-volume"></i>
-        </button>
-        <button class="icon-btn" id="bmkBtn" onclick="toggleBookmark()" title="Bookmark">
-          <i class="ti ti-bookmark"></i>
-        </button>
-        <button class="icon-btn" id="settBtn" onclick="toggleSettings()" title="Cài đặt">
-          <i class="ti ti-settings"></i>
-        </button>
-        <button class="icon-btn" onclick="toggleDrive()" title="Lưu đám mây">
-          <i class="ti ti-cloud-upload"></i>
-        </button>
-      </div>
-    </div>
-
     <!-- TTS BAR -->
     <div class="tts-bar hidden" id="ttsBar">
       <div class="tts-title" id="ttsLabel">TTS</div>
@@ -299,102 +346,6 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
           <button class="upload-btn" style="width:auto;padding:9px 22px" onclick="openUpload()">
             <i class="ti ti-upload"></i> Tải lên ngay
           </button>
-        </div>
-      </div>
-
-      <!-- SETTINGS PANEL -->
-      <div class="settings-panel" id="settingsPanel">
-        <div class="sp-head">
-          Cài đặt trang đọc
-          <button class="sp-close" onclick="toggleSettings()">×</button>
-        </div>
-
-        <!-- FONT & LAYOUT -->
-        <div class="sp-section">
-          <div class="sp-label">Cỡ chữ</div>
-          <div class="sp-row">
-            <label style="font-size:11px">A</label>
-            <input type="range" min="13" max="24" value="17" id="fontSizeSlider" oninput="updateFont()">
-            <span class="val" id="fontSizeVal">17px</span>
-          </div>
-          <div class="sp-label" style="margin-top:7px">Khoảng cách dòng</div>
-          <div class="sp-row">
-            <label>≡</label>
-            <input type="range" min="14" max="24" value="19" id="lineHSlider" oninput="updateFont()">
-            <span class="val" id="lineHVal">1.9</span>
-          </div>
-          <div class="sp-label" style="margin-top:7px">Độ rộng</div>
-          <div class="sp-row">
-            <label>↔</label>
-            <input type="range" min="300" max="900" value="680" step="10" id="widthSlider" oninput="updateFont()">
-            <span class="val" id="widthVal">680</span>
-          </div>
-        </div>
-
-        <!-- FONT FAMILY -->
-        <div class="sp-section">
-          <div class="sp-label">Font chữ</div>
-          <div class="font-btns">
-            <button class="font-btn active" onclick="setFont('Lora',this)">Lora</button>
-            <button class="font-btn" onclick="setFont('Georgia',this)">Georgia</button>
-            <button class="font-btn" onclick="setFont('Inter',this)">Sans</button>
-            <button class="font-btn" onclick="setFont('palatino',this)">Palatino</button>
-          </div>
-        </div>
-
-        <!-- BG COLOR -->
-        <div class="sp-section">
-          <div class="sp-label">Màu nền</div>
-          <div class="bg-swatches">
-            <div class="swatch active" style="background:#faf7f2;border-color:transparent" title="Giấy" onclick="setBg('#faf7f2','#1a1612',this)"></div>
-            <div class="swatch" style="background:#1a1a2e" title="Tối đêm" onclick="setBg('#1a1a2e','#d4cfc8',this)"></div>
-            <div class="swatch" style="background:#2a2010" title="Nâu" onclick="setBg('#2a2010','#e8d4a8',this)"></div>
-            <div class="swatch" style="background:#fff" title="Trắng" onclick="setBg('#fff','#1a1612',this)"></div>
-            <div class="swatch" style="background:#f0e6d0" title="Sepia" onclick="setBg('#f0e6d0','#2a1a08',this)"></div>
-            <div class="swatch" style="background:#0d1117" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
-          </div>
-        </div>
-
-        <!-- TOGGLES -->
-        <div class="sp-section">
-          <div class="toggle-row">
-            <label>Chế độ tập trung</label>
-            <input type="checkbox" class="toggle" id="focusMode" onchange="toggleFocus()">
-          </div>
-          <div class="toggle-row" style="margin-top:8px">
-            <label>Chữ hoa đầu đoạn</label>
-            <input type="checkbox" class="toggle" checked id="dropcapToggle" onchange="loadChapter(S.currentChapter)">
-          </div>
-          <div class="toggle-row" style="margin-top:8px">
-            <label>Làm nổi từ đang đọc</label>
-            <input type="checkbox" class="toggle" checked id="highlightToggle">
-          </div>
-        </div>
-
-        <!-- TTS VOICES -->
-        <div class="sp-section">
-          <div class="sp-label">Giọng đọc tiếng Việt</div>
-          <div id="voiceListEl" style="font-size:12px;color:var(--ink3)">Đang tải danh sách giọng đọc...</div>
-          <div style="margin-top:8px">
-            <div class="sp-label">Âm lượng</div>
-            <div class="sp-row">
-              <label><i class="ti ti-volume" style="font-size:14px"></i></label>
-              <input type="range" min="0" max="1" step="0.1" value="1" id="volSlider" oninput="changeVol(this.value)">
-              <span class="val" id="volVal">100%</span>
-            </div>
-            <div class="sp-label" style="margin-top:6px">Cao độ</div>
-            <div class="sp-row">
-              <label><i class="ti ti-music" style="font-size:14px"></i></label>
-              <input type="range" min="0.5" max="2" step="0.1" value="1" id="pitchSlider" oninput="changePitch(this.value)">
-              <span class="val" id="pitchVal">1.0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- BOOKMARKS -->
-        <div class="sp-section">
-          <div class="sp-label">Bookmark</div>
-          <div id="bookmarkList" style="font-size:12px;color:var(--ink3)">Chưa có bookmark nào</div>
         </div>
       </div>
     </div>
@@ -439,17 +390,8 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
   </div>
 </div>
 
-<!-- DRIVE PANEL -->
-<div class="drive-panel" id="drivePanel">
-  <div id="dpUserInfo"></div>
-  <div class="dp-head"><i class="ti ti-cloud" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Lưu trữ đám mây</div>
-  <button class="dp-btn drive" onclick="saveToDrive()">
-    <i class="ti ti-brand-google-drive" style="font-size:16px"></i> Lưu vào Google Drive
-  </button>
-  <button class="dp-btn fb" onclick="saveToFirebase()">
-    <i class="ti ti-database" style="font-size:16px"></i> Lưu vào Firebase
-  </button>
-  <div class="dp-status" id="dpStatus"></div>
+<!-- DRIVE PANEL (Hidden) -->
+<div class="drive-panel" id="drivePanel" style="display:none">
 </div>
 
 <!-- TOAST -->
@@ -460,6 +402,8 @@ body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);dis
 const S = {
   chapters: [], currentChapter: 0,
   bookmarks: [], loggedIn: false, userInfo: null,
+  globalDark: localStorage.getItem('globalDark') === 'true',
+  bookTitle: '',
   sepMode: 'auto', pendingText: '',
   font: 'Lora', fontSize: 17, lineH: 1.9, width: 680,
   bgColor: '#faf7f2', textColor: '#1a1612',
@@ -474,97 +418,50 @@ const S = {
 
 // ===================== INIT =====================
 window.addEventListener('DOMContentLoaded', () => {
+  if (S.globalDark) {
+    document.body.classList.add('dark-theme');
+    document.getElementById('globalDarkToggle').checked = true;
+  }
   renderChapterList();
   initTTS();
-  initGoogleAuth();
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.error('SW reg failed', err));
+  }
   // Close drive panel on outside click
   document.addEventListener('click', e => {
     if(!document.getElementById('drivePanel').contains(e.target) &&
        !e.target.closest('.icon-btn[onclick*="toggleDrive"]')){
       document.getElementById('drivePanel').classList.remove('open');
     }
-    if(window.innerWidth <= 640 && S.mobileOpen &&
+    if(S.mobileOpen &&
        !document.getElementById('sidebar').contains(e.target) &&
-       !e.target.closest('.hamburger')){
+       !e.target.closest('.floating-menu-btn')){
       closeMobileSidebar();
     }
   });
 });
 
-// ===================== CHAPTER RENDER (Virtual Scroll) =====================
-const ITEM_H = 52; // px per chapter item (approximate)
-let _vsTotal = 0, _vsStart = 0, _vsEnd = 0;
-
+// ===================== CHAPTER RENDER =====================
 function renderChapterList(){
-  const list = document.getElementById('chapterList');
-  const toolbar = document.getElementById('readerToolbar');
+  const sel = document.getElementById('chapterSelect');
+  if(!sel) return;
   if(!S.chapters.length){
-    list.innerHTML=`<div style="padding:24px 14px;text-align:center;color:var(--ink3);font-size:12px;line-height:1.6">
-      <i class="ti ti-books" style="font-size:28px;display:block;margin-bottom:8px;color:var(--paper3)"></i>
-      Chưa có truyện nào.<br>Bấm <strong style="color:var(--gold2)">Tải lên</strong> để thêm sách.
-    </div>`;
-    toolbar.style.display='none';
+    sel.innerHTML = '<option value="-1">Chưa có truyện nào</option>';
+    sel.disabled = true;
     return;
   }
-  toolbar.style.display='flex';
-
-  // For small lists (<= 80), render all normally
-  if(S.chapters.length <= 80) {
-    list.innerHTML = S.chapters.map((ch,i)=>`
-      <div class="chapter-item${i===S.currentChapter?' active':''}" onclick="loadChapter(${i});closeMobileSidebar()" data-idx="${i}">
-        <span class="chap-num">${ch.title}</span>${ch.subtitle?`<small style="color:var(--ink3);font-size:11px;display:block;margin-top:1px">${ch.subtitle}</small>`:''}
-      </div>`).join('');
-    return;
-  }
-
-  // Virtual scroll for large lists
-  _vsTotal = S.chapters.length;
-  list.innerHTML = `
-    <div id="vsPad" style="position:relative;height:${_vsTotal * ITEM_H}px">
-      <div id="vsItems" style="position:absolute;top:0;left:0;right:0"></div>
-    </div>`;
-  
-  const renderVisible = () => {
-    const scrollTop = list.scrollTop;
-    const viewH = list.clientHeight;
-    const start = Math.max(0, Math.floor(scrollTop / ITEM_H) - 5);
-    const end = Math.min(_vsTotal - 1, Math.ceil((scrollTop + viewH) / ITEM_H) + 5);
-    if(start === _vsStart && end === _vsEnd) return;
-    _vsStart = start; _vsEnd = end;
-    const items = document.getElementById('vsItems');
-    if(!items) return;
-    items.style.top = (start * ITEM_H) + 'px';
-    items.innerHTML = S.chapters.slice(start, end+1).map((ch,ri)=>{
-      const i = start + ri;
-      return `<div class="chapter-item${i===S.currentChapter?' active':''}" onclick="loadChapter(${i});closeMobileSidebar()" data-idx="${i}" style="height:${ITEM_H}px;overflow:hidden">
-        <span class="chap-num">${ch.title}</span>${ch.subtitle?`<small style="color:var(--ink3);font-size:11px;display:block;margin-top:1px">${ch.subtitle}</small>`:''}
-      </div>`;
-    }).join('');
-  };
-
-  list.addEventListener('scroll', renderVisible, {passive:true});
-  renderVisible();
-}
-
-function scrollToActiveChapter(){
-  const list = document.getElementById('chapterList');
-  if(!list) return;
-  if(S.chapters.length <= 80) {
-    const active = list.querySelector('.chapter-item.active');
-    if(active) active.scrollIntoView({block:'nearest',behavior:'smooth'});
-  } else {
-    // Virtual scroll: scroll list so active item is visible
-    const targetScroll = S.currentChapter * ITEM_H - list.clientHeight / 2 + ITEM_H;
-    list.scrollTo({top: Math.max(0, targetScroll), behavior:'smooth'});
-  }
+  sel.disabled = false;
+  sel.innerHTML = S.chapters.map((ch,i) => `<option value="${i}">${ch.title}</option>`).join('');
+  sel.value = S.currentChapter;
 }
 
 function loadChapter(idx){
   stopTts();
   S.currentChapter = idx;
+  if(S.bookTitle) localStorage.setItem('novreader_pos_' + S.bookTitle, idx);
   const ch = S.chapters[idx];
   const pct = Math.round(((idx+1)/S.chapters.length)*100);
-  document.getElementById('chapterPos').textContent = `${idx+1} / ${S.chapters.length}`;
   document.getElementById('progressFill').style.width = pct+'%';
   document.getElementById('progressLabel').textContent = pct+'% đã đọc';
   const dropcap = document.getElementById('dropcapToggle').checked;
@@ -589,12 +486,16 @@ function loadChapter(idx){
       <div class="chapter-body${dropcap?' dropcap':''}" style="font-family:${S.font},serif;font-size:${S.fontSize}px;line-height:${S.lineH};color:${S.textColor}">
         ${bodyHtml}
       </div>
+      <div style="display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:.5px solid var(--paper3)">
+        <button class="btn-ghost" onclick="prevChapter()" style="${idx===0?'visibility:hidden':''}">Chương trước</button>
+        <button class="btn-ghost" onclick="nextChapter()" style="${idx===S.chapters.length-1?'visibility:hidden':''}">Chương sau</button>
+      </div>
     </div>`;
   S.ttsWords = wordSpans;
   S.ttsCursor = 0;
   updateTtsProgress();
-  renderChapterList();
-  scrollToActiveChapter();
+  const sel = document.getElementById('chapterSelect');
+  if(sel) sel.value = idx;
   updateBmkBtn();
   if(S.ttsActive) prepareTtsWords();
 }
@@ -760,8 +661,8 @@ function seekTts(e){
 }
 
 function changeRate(v){ S.ttsRate = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
-function changeVol(v){ S.ttsVol = parseFloat(v); document.getElementById('volVal').textContent = Math.round(v*100)+'%'; if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
-function changePitch(v){ S.ttsPitch = parseFloat(v); document.getElementById('pitchVal').textContent = parseFloat(v).toFixed(1); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
+function changeVol(v){ S.ttsVol = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
+function changePitch(v){ S.ttsPitch = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
 
 
 function highlightWord(wi){
@@ -794,11 +695,8 @@ function prepareTtsWords(){ updateTtsProgress(); }
 // ===================== READING SETTINGS =====================
 function updateFont(){
   S.fontSize = document.getElementById('fontSizeSlider').value;
-  S.lineH = (document.getElementById('lineHSlider').value/10).toFixed(1);
+  S.lineH = document.getElementById('lineHSlider').value;
   S.width = document.getElementById('widthSlider').value;
-  document.getElementById('fontSizeVal').textContent = S.fontSize+'px';
-  document.getElementById('lineHVal').textContent = S.lineH;
-  document.getElementById('widthVal').textContent = S.width;
   const body = document.querySelector('.chapter-body');
   if(body){
     body.style.fontFamily = S.font+',serif';
@@ -828,17 +726,13 @@ function setBg(bg, text, el){
   if(heading) heading.style.color = text;
 }
 
-function toggleFocus(){
-  S.focusMode = document.getElementById('focusMode').checked;
-  document.getElementById('sidebar').classList.toggle('hidden', S.focusMode);
-  document.getElementById('readerToolbar').classList.toggle('hidden', S.focusMode);
-  document.getElementById('readerContent').classList.toggle('focus-mode', S.focusMode);
+function toggleGlobalDark(){
+  S.globalDark = document.getElementById('globalDarkToggle').checked;
+  document.body.classList.toggle('dark-theme', S.globalDark);
+  localStorage.setItem('globalDark', S.globalDark);
 }
 
-function toggleSettings(){
-  document.getElementById('settingsPanel').classList.toggle('open');
-  document.getElementById('settBtn').classList.toggle('active');
-}
+
 
 // ===================== BOOKMARK =====================
 function toggleBookmark(){
@@ -861,155 +755,6 @@ function renderBookmarks(){
     </div>`).join('');
 }
 function removeBookmark(i){ S.bookmarks=S.bookmarks.filter(b=>b!==i); updateBmkBtn(); renderBookmarks(); }
-
-// ===================== LOGIN / DRIVE =====================
-const GOOGLE_CLIENT_ID = '678182193542-dnti4timh4i8n72k8brg1m2fjt9a1aht.apps.googleusercontent.com';
-
-let googleAccessToken = null;
-
-function initGoogleAuth() {
-  if (typeof google === 'undefined') {
-    // Retry until GSI script is loaded
-    setTimeout(initGoogleAuth, 300);
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
-}
-
-function handleCredentialResponse(response) {
-  // Decode JWT payload from Google
-  try {
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    S.loggedIn = true;
-    S.userInfo = {
-      name: payload.name,
-      email: payload.email,
-      picture: payload.picture,
-      initials: payload.name ? payload.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '?'
-    };
-    const av = document.getElementById('avatarEl');
-    if (payload.picture) {
-      av.innerHTML = `<img src="${payload.picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover" referrerpolicy="no-referrer">`;
-    } else {
-      av.textContent = S.userInfo.initials;
-    }
-    document.getElementById('loginBtn').style.display = 'none';
-    av.style.display = 'flex';
-    showToast(`Xin chào, ${payload.given_name || payload.name}!`);
-  } catch(e) {
-    showToast('Lỗi đăng nhập, vui lòng thử lại');
-  }
-}
-
-function doLogin() {
-  if (typeof google === 'undefined') {
-    showToast('Đang tải Google Auth, vui lòng thử lại...');
-    return;
-  }
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // Fallback: open popup OAuth flow
-      const params = new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        redirect_uri: window.location.origin + window.location.pathname,
-        response_type: 'token',
-        scope: 'openid email profile https://www.googleapis.com/auth/drive.file',
-        prompt: 'select_account'
-      });
-      const popup = window.open('https://accounts.google.com/o/oauth2/v2/auth?' + params, 'google_login', 'width=500,height=600,left=200,top=100');
-      // Listen for redirect with token
-      const interval = setInterval(() => {
-        try {
-          const hash = popup.location.hash;
-          if (hash && hash.includes('access_token')) {
-            clearInterval(interval);
-            popup.close();
-            const tokenMatch = hash.match(/access_token=([^&]+)/);
-            if (tokenMatch) {
-              googleAccessToken = tokenMatch[1];
-              // Fetch user info
-              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: 'Bearer ' + googleAccessToken }
-              }).then(r=>r.json()).then(info => {
-                S.loggedIn = true;
-                S.userInfo = {
-                  name: info.name, email: info.email, picture: info.picture,
-                  initials: info.name ? info.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '?'
-                };
-                const av = document.getElementById('avatarEl');
-                if (info.picture) {
-                  av.innerHTML = `<img src="${info.picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover" referrerpolicy="no-referrer">`;
-                } else {
-                  av.textContent = S.userInfo.initials;
-                }
-                document.getElementById('loginBtn').style.display = 'none';
-                av.style.display = 'flex';
-                showToast(`Xin chào, ${info.given_name || info.name}!`);
-              });
-            }
-          }
-        } catch(e) { /* cross-origin, still loading */ }
-        if (popup.closed) clearInterval(interval);
-      }, 500);
-    }
-  });
-}
-
-function doLogout() {
-  S.loggedIn = false;
-  S.userInfo = null;
-  googleAccessToken = null;
-  if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
-  document.getElementById('loginBtn').style.display = '';
-  const av = document.getElementById('avatarEl');
-  av.style.display = 'none';
-  av.innerHTML = 'NT';
-  document.getElementById('drivePanel').classList.remove('open');
-  showToast('Đã đăng xuất');
-}
-
-function toggleDrive(){
-  if(!S.loggedIn){ showToast('Vui lòng đăng nhập trước'); return; }
-  document.getElementById('drivePanel').classList.toggle('open');
-  if (document.getElementById('drivePanel').classList.contains('open')) {
-    const info = document.getElementById('dpUserInfo');
-    if (S.userInfo) {
-      info.innerHTML = `<div style="font-size:11px;color:var(--ink3);margin-bottom:10px;padding-bottom:8px;border-bottom:.5px solid var(--paper3)">
-        <span style="font-weight:500;color:var(--ink)">${S.userInfo.name}</span><br>${S.userInfo.email}
-        <button onclick="doLogout()" style="display:block;margin-top:6px;font-size:11px;color:var(--ink3);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline">Đăng xuất</button>
-      </div>`;
-    }
-  }
-}
-function saveToDrive(){
-  if (!googleAccessToken) { showToast('Cần đăng nhập để lưu Drive'); return; }
-  const s = document.getElementById('dpStatus');
-  s.textContent='Đang lưu vào Google Drive...'; s.classList.add('show');
-  // Save current book as .txt to Drive
-  const content = S.chapters.map(ch => ch.title + (ch.subtitle ? ': '+ch.subtitle : '') + '\n\n' + ch.content).join('\n\n');
-  const blob = new Blob([content], {type:'text/plain'});
-  const formData = new FormData();
-  const meta = JSON.stringify({name: (document.getElementById('bookTitle').textContent||'NovReader') + '.txt', mimeType:'text/plain'});
-  formData.append('metadata', new Blob([meta],{type:'application/json'}));
-  formData.append('file', blob);
-  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-    method:'POST',
-    headers:{Authorization:'Bearer '+googleAccessToken},
-    body: formData
-  }).then(r=>r.json()).then(data=>{
-    if(data.id) s.textContent='✓ Đã lưu vào Google Drive!';
-    else s.textContent='Lỗi: '+( data.error?.message||'Không rõ');
-  }).catch(()=>{ s.textContent='Lỗi kết nối Drive'; });
-}
-function saveToFirebase(){
-  const s = document.getElementById('dpStatus');
-  s.textContent='Firebase chưa được cấu hình.'; s.classList.add('show');
-}
 
 // ===================== UPLOAD =====================
 function openUpload(){ document.getElementById('uploadModal').classList.add('open'); }
@@ -1214,11 +959,15 @@ function doParse(text, name){
   }
 
   S.chapters = validChapters;
-  S.currentChapter = 0;
+  S.bookTitle = name;
+  let savedIdx = localStorage.getItem('novreader_pos_' + name);
+  let startChap = savedIdx ? parseInt(savedIdx) : 0;
+  S.currentChapter = startChap < validChapters.length ? startChap : 0;
+  
   document.getElementById('bookTitle').textContent = name;
   document.getElementById('bookInfo').textContent = `${validChapters.length} chương`;
   renderChapterList();
-  loadChapter(0);
+  loadChapter(S.currentChapter);
   closeUpload();
   showToast(`Đã tải "${name}" — ${validChapters.length} chương`);
 }

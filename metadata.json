@@ -1,0 +1,8 @@
+{
+  "name": "NovReader",
+  "description": "Trình đọc truyện chữ và nghe đọc sách chất lượng cao hỗ trợ tải file TXT và lấy chương từ SangTacViet",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

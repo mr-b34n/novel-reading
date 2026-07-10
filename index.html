@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>NovReader</title>
-<link rel="manifest" href="manifest.json">
+<title>NovReader - Trình Đọc Sách & Crawl Truyện</title>
 <meta name="theme-color" content="#1a1612">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -159,6 +158,28 @@ body.dark-theme{
 .sb-pane::-webkit-scrollbar{display:none}
 .sb-pane.active{display:block}
 
+/* UPLOAD MODAL TAB SPECIFIC */
+.upload-tab {
+  background: none;
+  border: none;
+  font-size: 13.5px;
+  font-family: 'Inter', sans-serif;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--ink3);
+  font-weight: 500;
+  transition: all .15s;
+  border-bottom: 2px solid transparent;
+}
+.upload-tab:hover {
+  color: var(--ink);
+}
+.upload-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--gold);
+  font-weight: 600;
+}
+
 /* SETTINGS PANEL IN SIDEBAR */
 .sp-section{padding:12px 14px;border-bottom:.5px solid var(--paper3)}
 .sp-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
@@ -193,10 +214,42 @@ body.dark-theme{
 .sp-select{width:100%;padding:7px 10px;background:var(--paper3);border:1px solid transparent;color:var(--ink);border-radius:6px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer;margin-top:4px}
 .sp-select:focus{border-color:var(--gold)}
 
-/* UPLOAD & BOOK DETAIL MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(26,22,18,.75);display:none;align-items:center;justify-content:center;z-index:200}
-.modal-overlay.open{display:flex}
-.modal{background:var(--paper);border-radius:12px;padding:24px;width:460px;max-width:92%;max-height:90vh;overflow-y:auto}
+/* UPLOAD & BOOK DETAIL MODAL & CONFIRMATION */
+@keyframes overlayFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(4px); }
+}
+@keyframes modalPopIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(26,22,18,.6);
+  display:none;align-items:center;justify-content:center;
+  z-index:200;
+  opacity:0;
+}
+.modal-overlay.open{
+  display:flex !important;
+  animation: overlayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.modal{
+  background:var(--paper);
+  border-radius:16px;
+  padding:24px;
+  width:460px;
+  max-width:92%;
+  max-height:90vh;
+  overflow-y:auto;
+  border: 1px solid var(--paper3);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+  transform: scale(0.95);
+  opacity: 0;
+}
+.modal-overlay.open .modal{
+  animation: modalPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
 .modal h3{font-family:'Lora',serif;font-size:17px;color:var(--ink);margin-bottom:5px}
 .modal-desc{font-size:12.5px;color:var(--ink3);margin-bottom:18px}
 .drop-zone{border:1.5px dashed var(--paper3);border-radius:8px;padding:28px;text-align:center;cursor:pointer;background:var(--paper2)}
@@ -223,6 +276,7 @@ body.dark-theme{
 .btn-cancel{background:transparent;border:.5px solid var(--paper3);color:var(--ink2);padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif}
 .btn-ok{background:var(--gold);color:#1a1612;border:none;padding:7px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
 .btn-ok:hover{background:var(--gold2)}
+.btn-ok:disabled{background:var(--paper3);color:var(--ink3);cursor:not-allowed}
 
 /* DRIVE PANEL */
 .drive-panel{position:fixed;top:62px;right:12px;background:var(--paper);border:.5px solid var(--paper3);border-radius:10px;padding:14px;width:210px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:100;display:none}
@@ -234,14 +288,19 @@ body.dark-theme{
 .welcome h2{font-size:28px;margin-bottom:12px;font-family:'Lora',serif;font-weight:600}
 .welcome p{color:var(--ink2);margin-bottom:30px;line-height:1.6}
 .library-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:40px;text-align:left}
-.book-card{background:var(--paper2);border:1px solid var(--paper3);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;display:flex;flex-direction:column;gap:8px}
-.book-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.05)}
-.dark-theme .book-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.3)}
-.book-card-title{font-weight:600;font-size:15px;color:var(--ink);line-height:1.4;display:-webkit-box;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-card{background:var(--paper2);border:1px solid var(--paper3);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);position:relative;display:flex;flex-direction:column;gap:8px}
+.book-card:hover{border-color:var(--gold);transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+.dark-theme .book-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.book-card-title{font-weight:600;font-size:15px;color:var(--ink);line-height:1.4;display:-webkit-box;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color 0.2s;}
+.book-card:hover .book-card-title{color:var(--accent)}
 .book-card-info{font-size:12px;color:var(--ink3)}
-.book-card-del{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:var(--paper);border:1px solid var(--paper3);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;z-index:2}
-.book-card:hover .book-card-del{opacity:1}
-.book-card-del:hover{color:red;border-color:red}
+.book-card-del{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:var(--paper);border:1px solid var(--paper3);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.65;transition:all .2s;z-index:2}
+@media(min-width: 641px) {
+  .book-card-del{opacity:0}
+  .book-card:hover .book-card-del{opacity:0.85}
+  .book-card:hover .book-card-del:hover{opacity:1}
+}
+.book-card-del:hover{color:#fff;background:#e65100;border-color:#e65100;transform:scale(1.1)}
 
 /* TOAST */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1612;color:#e8d4a8;padding:9px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none}
@@ -561,9 +620,9 @@ body.dark-theme{
         <div class="welcome" id="welcomeScreen">
           <div class="welcome-icon">📚</div>
           <h2>Thư viện sách</h2>
-          <p>Tải lên file .txt để bắt đầu đọc sách với hỗ trợ Text-to-Speech</p>
-          <button class="upload-btn" style="width:auto;padding:9px 22px;margin:0 auto" onclick="openUpload()">
-            <i class="ti ti-upload"></i> Tải sách mới
+          <p>Tải lên file văn bản .txt để bắt đầu đọc và nghe đọc với giọng đọc AI chất lượng cao</p>
+          <button class="upload-btn" style="width:auto;padding:10px 24px;margin:0 auto;box-shadow:0 4px 12px rgba(201, 169, 110, 0.3)" onclick="openUpload()">
+            <i class="ti ti-upload"></i> Tải sách mới (.txt)
           </button>
           <div class="library-grid" id="libraryGrid"></div>
         </div>
@@ -575,52 +634,93 @@ body.dark-theme{
 
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
-    <h3>Tải lên sách</h3>
-    <p class="modal-desc">Hỗ trợ file .txt — UTF-8, tự động phân tách chương</p>
-    <div class="drop-zone" id="dropZone"
-         onclick="document.getElementById('fileInput').click()"
-         ondragover="event.preventDefault();this.classList.add('drag')"
-         ondragleave="this.classList.remove('drag')"
-         ondrop="handleDrop(event)">
-      <div class="drop-icon">📂</div>
-      <p>Kéo thả file hoặc bấm để chọn</p>
-      <small>Định dạng: .txt | Mã hóa: UTF-8</small>
+    <h3 style="font-family:'Lora',serif;font-size:17px;color:var(--ink);margin-bottom:5px">Thêm truyện mới vào thư viện</h3>
+    
+    <!-- Tab Selector -->
+    <div style="display:flex;gap:4px;margin:12px 0 16px;border-bottom:.5px solid var(--paper3)">
+      <button class="upload-tab active" id="tabUploadFile" onclick="switchUploadTab('file')">📂 Tải file .txt</button>
+      <button class="upload-tab" id="tabUploadCrawl" onclick="switchUploadTab('crawl')">🔗 Thêm từ SangTacViet</button>
     </div>
-    <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFile(event)">
-    <div class="meta-section">
-      <div>
-        <div class="sep-label">Tiêu đề truyện</div>
-        <input type="text" id="bookTitleInput" class="meta-input" placeholder="Nhập tiêu đề truyện">
+    
+    <!-- File Upload Area -->
+    <div id="sectionUploadFile">
+      <p class="modal-desc">Hỗ trợ định dạng file văn bản .txt (UTF-8). Tự động nhận diện và phân tách các chương.</p>
+      <div class="drop-zone" id="dropZone"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <div class="drop-icon">📂</div>
+        <p>Kéo thả file hoặc bấm để chọn</p>
+        <small>Định dạng: .txt | Mã hóa: UTF-8</small>
       </div>
-      <div>
-        <div class="sep-label">Trang giới thiệu</div>
-        <input type="text" id="introTitleInput" class="meta-input" value="Giới thiệu" placeholder="Tiêu đề trang giới thiệu">
+      <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFile(event)">
+      <div class="meta-section">
+        <div>
+          <div class="sep-label">Tiêu đề truyện</div>
+          <input type="text" id="bookTitleInput" class="meta-input" placeholder="Nhập tiêu đề truyện (hoặc lấy theo tên file)">
+        </div>
+        <div>
+          <div class="sep-label">Trang giới thiệu</div>
+          <input type="text" id="introTitleInput" class="meta-input" value="Giới thiệu" placeholder="Tiêu đề trang giới thiệu">
+        </div>
+        <div>
+          <div class="sep-label">Nội dung giới thiệu (tuỳ chọn)</div>
+          <textarea id="introContentInput" class="meta-textarea" placeholder="Nhập lời giới thiệu, lời tựa hoặc ghi chú đầu truyện..."></textarea>
+          <div class="meta-hint">Nội dung này sẽ được gộp vào trang giới thiệu thay cho “Chương 0”.</div>
+        </div>
       </div>
-      <div>
-        <div class="sep-label">Nội dung giới thiệu (tuỳ chọn)</div>
-        <textarea id="introContentInput" class="meta-textarea" placeholder="Nhập lời giới thiệu, lời tựa hoặc ghi chú đầu truyện..."></textarea>
-        <div class="meta-hint">Nội dung này sẽ được gộp vào trang giới thiệu thay cho “Chương 0”.</div>
+      <div class="sep-section">
+        <div class="sep-label">Định dạng phân tách chương</div>
+        <div class="sep-tags">
+          <div class="sep-tag active" onclick="selectSep('auto',this)">🔍 Tự động</div>
+          <div class="sep-tag" onclick="selectSep('chapter',this)">Chương XX:</div>
+          <div class="sep-tag" onclick="selectSep('thu',this)">Thứ XX chương</div>
+          <div class="sep-tag" onclick="selectSep('chapter_en',this)">Chapter XX</div>
+          <div class="sep-tag" onclick="selectSep('hoi',this)">Hồi XX</div>
+          <div class="sep-tag" onclick="selectSep('phan',this)">Phần XX</div>
+          <div class="sep-tag" onclick="selectSep('separator',this)">--- phân cách</div>
+          <div class="sep-tag" onclick="selectSep('custom',this)">Tùy chỉnh...</div>
+        </div>
+        <div class="sep-custom" id="customSepRow" style="display:none">
+          <input type="text" id="customSepInput" placeholder="Nhập từ khóa, vd: === hoặc PART">
+        </div>
       </div>
     </div>
-    <div class="sep-section">
-      <div class="sep-label">Định dạng phân tách chương</div>
-      <div class="sep-tags">
-        <div class="sep-tag active" onclick="selectSep('auto',this)">🔍 Tự động</div>
-        <div class="sep-tag" onclick="selectSep('chapter',this)">Chương XX:</div>
-        <div class="sep-tag" onclick="selectSep('thu',this)">Thứ XX chương</div>
-        <div class="sep-tag" onclick="selectSep('chapter_en',this)">Chapter XX</div>
-        <div class="sep-tag" onclick="selectSep('hoi',this)">Hồi XX</div>
-        <div class="sep-tag" onclick="selectSep('phan',this)">Phần XX</div>
-        <div class="sep-tag" onclick="selectSep('separator',this)">--- phân cách</div>
-        <div class="sep-tag" onclick="selectSep('custom',this)">Tùy chỉnh...</div>
-      </div>
-      <div class="sep-custom" id="customSepRow" style="display:none">
-        <input type="text" id="customSepInput" placeholder="Nhập từ khóa, vd: === hoặc PART">
+
+    <!-- Section 2: SangTacViet crawl -->
+    <div id="sectionUploadCrawl" style="display:none">
+      <p class="modal-desc">Nhập liên kết truyện từ SangTacViet hoặc Book ID để tự động lấy danh sách chương và đọc trực tiếp.</p>
+      <div class="meta-section">
+        <div>
+          <div class="sep-label">Địa chỉ truyện hoặc Book ID <span style="color:#e65100">*</span></div>
+          <input type="text" id="crawlUrlInput" class="meta-input" placeholder="Ví dụ: https://sangtacviet.com/truyen/fanqie/1/7074332467140135968/ hoặc 7074332467140135968">
+          <div class="meta-hint">Hệ thống hỗ trợ lấy trực tiếp từ nguồn Fanqie qua SangTacViet cực kỳ ổn định.</div>
+        </div>
+        <div>
+          <div class="sep-label">Tên truyện mới (Để trống để tự động lấy từ danh sách chương)</div>
+          <input type="text" id="crawlBookTitle" class="meta-input" placeholder="Nhập tên truyện mới (tùy chọn)">
+        </div>
       </div>
     </div>
-    <div class="modal-footer">
+
+    <div class="modal-footer" style="margin-top: 24px; border-top: 0.5px solid var(--paper3); padding-top: 16px;">
       <button class="btn-cancel" onclick="closeUpload()">Hủy</button>
-      <button class="btn-ok" id="parseBtn" onclick="triggerParse()">Xử lý & Đọc</button>
+      <button class="btn-ok" id="parseBtn" onclick="triggerParse()" disabled>Xử lý & Đọc</button>
+      <button class="btn-ok" id="crawlBtn" onclick="triggerCrawl()" style="display:none">Thêm truyện & Đọc</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom smooth confirm popup to bypass iframe blocks -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width: 380px; text-align: center; padding: 28px 24px;">
+    <div style="font-size: 42px; margin-bottom: 14px;" id="confirmIcon">🗑️</div>
+    <h3 id="confirmTitle" style="font-family:'Lora',serif; font-size: 18px; color: var(--ink); margin-bottom: 8px;">Xác nhận</h3>
+    <p id="confirmMessage" style="color: var(--ink3); font-size: 13px; margin-bottom: 24px; line-height: 1.5;">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <button class="btn-cancel" id="btnConfirmCancel" style="flex: 1; padding: 10px; border-radius: 8px; font-weight: 500;">Hủy</button>
+      <button class="btn-ok" id="btnConfirmOk" style="flex: 1; padding: 10px; border-radius: 8px; font-weight: 500; background: #e65100; color: white;">Xác nhận</button>
     </div>
   </div>
 </div>
@@ -673,8 +773,52 @@ const S = {
   readLimitMinutes: 30,
   readLimitTimer: null,
   readLimitDeadline: null,
-  readLimitExpired: false
+  readLimitExpired: false,
+  uploadTab: 'file',
+  isSangTacViet: false,
+  bookId: ''
 };
+
+// Custom popup confirmation promise helper (bypass sandboxed iframe confirm/alert restrictions)
+function showConfirm(title, message, icon, okText, cancelText) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    if (!modal) {
+      resolve(false);
+      return;
+    }
+    document.getElementById('confirmTitle').textContent = title || 'Xác nhận';
+    document.getElementById('confirmMessage').textContent = message || '';
+    document.getElementById('confirmIcon').textContent = icon || '❓';
+    
+    const okBtn = document.getElementById('btnConfirmOk');
+    const cancelBtn = document.getElementById('btnConfirmCancel');
+    
+    if (okBtn && cancelBtn) {
+      okBtn.textContent = okText || 'Xác nhận';
+      cancelBtn.textContent = cancelText || 'Hủy';
+      
+      if (okText === 'Xóa' || (title && title.toLowerCase().includes('xóa'))) {
+        okBtn.style.background = '#e65100';
+        okBtn.style.color = '#fff';
+      } else {
+        okBtn.style.background = 'var(--gold)';
+        okBtn.style.color = '#1a1612';
+      }
+      
+      okBtn.onclick = () => {
+        modal.classList.remove('open');
+        resolve(true);
+      };
+      
+      cancelBtn.onclick = () => {
+        modal.classList.remove('open');
+        resolve(false);
+      };
+    }
+    modal.classList.add('open');
+  });
+}
 
 // ===================== INDEXEDDB PERSISTENCE =====================
 const DB_NAME = 'NovReaderDB', DB_VER = 1, STORE = 'books';
@@ -686,11 +830,18 @@ function openDB(){
     req.onerror = () => rej(req.error);
   });
 }
-async function saveBook(name, chapters){
+async function saveBook(name, chapters, isSangTacViet = false, bookId = ''){
   try{
     const db = await openDB();
     const tx = db.transaction(STORE,'readwrite');
-    tx.objectStore(STORE).put({id: name, name, chapters, lastAccessed: Date.now()});
+    tx.objectStore(STORE).put({
+      id: name, 
+      name, 
+      chapters, 
+      lastAccessed: Date.now(),
+      isSangTacViet: !!isSangTacViet,
+      bookId: bookId || ''
+    });
   } catch(e){ console.warn('IndexedDB save failed', e); }
 }
 async function loadBook(name){
@@ -774,9 +925,11 @@ async function renderLibrary(){
     let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + b.name) || '0');
     savedIdx = Number.isNaN(savedIdx) ? 0 : Math.min(Math.max(savedIdx, 0), maxIndex);
     const pct = bookChapters.length ? Math.round(((savedIdx+1)/bookChapters.length)*100) : 0;
+    
+    const escapedName = encodeURIComponent(b.name);
     return `
-      <div class="book-card" onclick="openBookFromLibrary('${b.name}')">
-        <button class="book-card-del" onclick="event.stopPropagation(); removeBookFromLibrary('${b.name}')" title="Xóa sách">
+      <div class="book-card" onclick="openBookFromLibrary(decodeURIComponent('${escapedName}'))">
+        <button class="book-card-del" onclick="event.stopPropagation(); removeBookFromLibrary(decodeURIComponent('${escapedName}'))" title="Xóa sách">
           <i class="ti ti-trash"></i>
         </button>
         <div class="book-card-title">${b.name}</div>
@@ -827,6 +980,8 @@ async function startReadingFrom(chapIndex) {
     S.chapters = normalizeBookChapters(saved.chapters);
     S.bookTitle = saved.name;
     S.currentChapter = chapIndex;
+    S.isSangTacViet = !!saved.isSangTacViet;
+    S.bookId = saved.bookId || '';
     
     document.getElementById('bookTitle').textContent = saved.name;
     document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
@@ -838,12 +993,19 @@ async function startReadingFrom(chapIndex) {
     
     loadChapter(S.currentChapter);
     showToast(`Đã mở “${saved.name}”`);
-    saveBook(saved.name, S.chapters); // Cập nhật lastAccessed
+    saveBook(saved.name, S.chapters, S.isSangTacViet, S.bookId); // Cập nhật lastAccessed
   }
 }
 
 async function removeBookFromLibrary(name){
-  if(confirm(`Xóa sách "${name}" khỏi thư viện?`)){
+  const confirmed = await showConfirm(
+    'Xóa sách',
+    `Bạn có chắc chắn muốn xóa truyện "${name}" khỏi thư viện cá nhân? Tiến trình đọc của truyện này cũng sẽ bị xóa.`,
+    '🗑️',
+    'Xóa',
+    'Hủy'
+  );
+  if(confirmed){
     await deleteBook(name);
     if(S.bookTitle === name){
       location.reload();
@@ -1093,6 +1255,61 @@ function loadChapter(idx){
   if(S.bookTitle) localStorage.setItem('novreader_pos_' + S.bookTitle, idx);
   const ch = S.chapters[idx];
   if(!ch) return;
+
+  if (S.isSangTacViet && (!ch.content || ch.content.trim().length === 0)) {
+    // Show smooth, high-contrast dynamic loading screen
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.style.display = 'none';
+    let cc = document.getElementById('chapterContent');
+    if (!cc) {
+      cc = document.createElement('div');
+      cc.id = 'chapterContent';
+      const rc = document.getElementById('readerContent');
+      rc.appendChild(cc);
+    }
+    cc.style.display = 'block';
+    cc.innerHTML = `
+      <div style="max-width:${S.width}px;margin:15vh auto;text-align:center;font-family:'Lora',serif;color:var(--ink)">
+        <div style="font-size:48px;margin-bottom:20px;animation: pulse 1.5s infinite">📖</div>
+        <h3 style="font-size:18px;margin-bottom:10px;font-weight:600">Đang tải chương từ SangTacViet</h3>
+        <p style="font-size:13.5px;color:var(--ink3);margin-bottom:24px;word-break:break-word">${ch.title}</p>
+        <div style="width:200px;height:4px;background:var(--paper3);border-radius:2px;margin:0 auto;overflow:hidden;position:relative">
+          <div style="width:50%;height:100%;background:var(--gold);border-radius:2px;position:absolute;animation: loadingBar 1.2s infinite ease-in-out"></div>
+        </div>
+        <p style="font-size:11.5px;color:var(--ink3);margin-top:16px">Lấy chương tuần tự &bull; An toàn tuyệt đối</p>
+      </div>
+      <style>
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+        @keyframes loadingBar {
+          0% { left: -50%; }
+          100% { left: 100%; }
+        }
+      </style>
+    `;
+
+    fetchChapterContentFromProxy(S.bookId, ch.id, idx + 1)
+      .then(async (result) => {
+        S.chapters[idx].content = result.content;
+        S.chapters[idx].title = result.title;
+        await saveBook(S.bookTitle, S.chapters, S.isSangTacViet, S.bookId);
+        loadChapter(idx);
+      })
+      .catch((err) => {
+        console.error(err);
+        cc.innerHTML = `
+          <div style="max-width:${S.width}px;margin:15vh auto;text-align:center;font-family:'Lora',serif;color:var(--ink)">
+            <div style="font-size:48px;margin-bottom:20px">⚠️</div>
+            <h3 style="font-size:18px;margin-bottom:10px;color:#e65100;font-weight:600">Lỗi tải nội dung</h3>
+            <p style="font-size:13.5px;color:var(--ink3);margin-bottom:24px">${err.message || 'Không thể lấy dữ liệu từ SangTacViet.'}</p>
+            <button class="btn-ok" onclick="loadChapter(${idx})" style="background:#e65100;color:white;padding:10px 24px;border-radius:8px">Thử lại</button>
+          </div>
+        `;
+      });
+    return;
+  }
   const pct = Math.round(((idx+1)/S.chapters.length)*100);
   document.getElementById('progressFill').style.width = pct+'%';
   document.getElementById('progressLabel').textContent = pct+'% đã đọc';
@@ -1393,6 +1610,7 @@ function updateReadingLimitUI(){
   }
 }
 
+// Check time constraints
 function isReadingLimitLocked(){
   return S.readLimitEnabled && S.readLimitExpired;
 }
@@ -1453,17 +1671,14 @@ function updateReadingLimitMinutes(){
 
 // ===================== TABS =====================
 function switchTab(tabId, el){
-  // Deactivate all tab buttons first across desktop & mobile
   document.querySelectorAll('.sb-tab').forEach(t=>t.classList.remove('active'));
   
-  // Set active class on BOTH corresponding desktop and mobile tab buttons for perfect state synchrony
   const capId = tabId.charAt(0).toUpperCase() + tabId.slice(1);
   const desktopBtn = document.getElementById('tab' + capId);
   const mobileBtn = document.getElementById('mTab' + capId);
   if(desktopBtn) desktopBtn.classList.add('active');
   if(mobileBtn) mobileBtn.classList.add('active');
 
-  // Activate chosen content pane
   document.querySelectorAll('.sb-pane').forEach(p=>p.classList.remove('active'));
   const pane = document.getElementById('pane' + capId);
   if(pane) pane.classList.add('active');
@@ -1478,7 +1693,6 @@ function setFont(f, el){
   localStorage.setItem('novreader_font', f);
 }
 
-// Set global reading interface color theme
 function setBg(bg, text, el){
   S.bgColor = bg; S.textColor = text;
   document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
@@ -1497,7 +1711,7 @@ function toggleGlobalDark(){
   localStorage.setItem('globalDark', S.globalDark);
 }
 
-// ===================== UPLOAD =====================
+// ===================== UPLOAD MODAL OPEN / CLOSE =====================
 function openUpload(){
   S.pendingText = ''; S.pendingName = '';
   S.pendingIntroTitle = 'Giới thiệu';
@@ -1514,15 +1728,213 @@ function openUpload(){
   if(introContentInput) introContentInput.value = '';
   const parseBtn = document.getElementById('parseBtn');
   if(parseBtn) { parseBtn.textContent = 'Xử lý & Đọc'; parseBtn.disabled = true; }
+  
+  // Reset crawl inputs
+  const crawlUrlInput = document.getElementById('crawlUrlInput');
+  if (crawlUrlInput) crawlUrlInput.value = '';
+  const crawlBookTitle = document.getElementById('crawlBookTitle');
+  if (crawlBookTitle) crawlBookTitle.value = '';
+  
+  switchUploadTab('file'); // Default to file upload tab
+  
   document.getElementById('uploadModal').classList.add('open');
 }
+
 function closeUpload(){ document.getElementById('uploadModal').classList.remove('open'); }
+
+function switchUploadTab(tabId) {
+  S.uploadTab = tabId;
+  const tabUploadFile = document.getElementById('tabUploadFile');
+  const tabUploadCrawl = document.getElementById('tabUploadCrawl');
+  const sectionUploadFile = document.getElementById('sectionUploadFile');
+  const sectionUploadCrawl = document.getElementById('sectionUploadCrawl');
+  const parseBtn = document.getElementById('parseBtn');
+  const crawlBtn = document.getElementById('crawlBtn');
+
+  if (!tabUploadFile || !tabUploadCrawl) return;
+
+  if (tabId === 'file') {
+    tabUploadFile.classList.add('active');
+    tabUploadCrawl.classList.remove('active');
+    sectionUploadFile.style.display = 'block';
+    sectionUploadCrawl.style.display = 'none';
+    parseBtn.style.display = 'inline-block';
+    crawlBtn.style.display = 'none';
+  } else {
+    tabUploadFile.classList.remove('active');
+    tabUploadCrawl.classList.add('active');
+    sectionUploadFile.style.display = 'none';
+    sectionUploadCrawl.style.display = 'block';
+    parseBtn.style.display = 'none';
+    crawlBtn.style.display = 'inline-block';
+  }
+}
+
+function parseChapterList(rawData) {
+  const chapters = [];
+  if (typeof rawData === 'string') {
+    const chapterStrings = rawData.split('-//-').filter(str => str.trim());
+    chapterStrings.forEach(chapterStr => {
+      const parts = chapterStr.split('-/-');
+      if (parts.length >= 3) {
+        const chapterId = parts[1].trim();
+        const title = parts[2].trim();
+
+        // Extract chapter number from list title
+        let chapterNumber = 0;
+        const numberMatch = title.match(/(?:Chương|Thứ)\s*(\d+)/i);
+        if (numberMatch && numberMatch[1]) {
+          chapterNumber = parseInt(numberMatch[1]);
+        } else {
+          const leadingNumberMatch = title.match(/^(\d+)/);
+          if (leadingNumberMatch && leadingNumberMatch[1]) {
+            chapterNumber = parseInt(leadingNumberMatch[1]);
+          }
+        }
+
+        chapters.push({
+          id: chapterId,
+          title: title,
+          number: chapterNumber
+        });
+      }
+    });
+  }
+  return chapters;
+}
+
+async function fetchChapterContentFromProxy(bookId, chapterId, chapterListNumber) {
+  const url = `/api/stv/content?bookId=${encodeURIComponent(bookId)}&chapterId=${encodeURIComponent(chapterId)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Không thể tải chương từ SangTacViet. Vui lòng kiểm tra lại kết nối mạng.');
+  }
+  const result = await res.json();
+  if (!result.success || !result.data) {
+    throw new Error(result.error || 'Dữ liệu trả về trống hoặc không hợp lệ.');
+  }
+  
+  const data = result.data;
+  if (!data.data || !data.chaptername) {
+    throw new Error('Chương này hiện tại không có nội dung trên SangTacViet.');
+  }
+  
+  let rawChapterTitle = data.chaptername.trim();
+
+  // Giữ nguyên nội dung tiêu đề nhưng sử dụng số chương từ danh sách
+  let chapterName = rawChapterTitle;
+  const colonIndex = rawChapterTitle.indexOf(':');
+  if (colonIndex > -1) {
+    chapterName = rawChapterTitle.substring(colonIndex + 1).trim();
+  }
+
+  const formattedChapterTitle = `Chương ${chapterListNumber}: ${chapterName}`;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.data, 'text/html');
+  const paragraphs = Array.from(doc.querySelectorAll('p')).map(p => p.textContent.trim())
+      .filter(p => p && !p.includes('Bạn đang đọc bản lưu trong hệ thống') && !p.includes('Bạn đang xem văn bản gốc chưa dịch'));
+  const formattedContent = paragraphs.join('\n\n');
+
+  return {
+    title: formattedChapterTitle,
+    content: formattedContent,
+    number: chapterListNumber
+  };
+}
+
+async function triggerCrawl() {
+  const urlInput = document.getElementById('crawlUrlInput');
+  const urlOrId = urlInput ? urlInput.value.trim() : '';
+  if (!urlOrId) {
+    showToast('Vui lòng nhập link truyện hoặc Book ID SangTacViet!');
+    return;
+  }
+
+  // Extract Book ID
+  let bookId = urlOrId;
+  const match = urlOrId.match(/(?:bookid=|\/)(\d+)\/?(?:$|\?|&)/i);
+  if (match && match[1]) {
+    bookId = match[1];
+  } else {
+    if (!/^\d+$/.test(urlOrId)) {
+      showToast('Đường dẫn truyện hoặc Book ID không hợp lệ!');
+      return;
+    }
+  }
+
+  const crawlBtn = document.getElementById('crawlBtn');
+  const originalText = crawlBtn ? crawlBtn.textContent : '';
+  if (crawlBtn) {
+    crawlBtn.disabled = true;
+    crawlBtn.textContent = 'Đang lấy danh sách...';
+  }
+
+  const customBookTitle = document.getElementById('crawlBookTitle') ? document.getElementById('crawlBookTitle').value.trim() : '';
+
+  try {
+    const response = await fetch(`/api/stv/chapters?bookId=${encodeURIComponent(bookId)}`);
+    if (!response.ok) {
+      throw new Error(`Lỗi kết nối proxy server (HTTP ${response.status})`);
+    }
+
+    const res = await response.json();
+    if (!res.success || !res.data) {
+      throw new Error(res.error || 'Nội dung trả về trống');
+    }
+
+    const data = res.data;
+    if (!data.data) {
+      throw new Error('Không lấy được danh sách chương từ SangTacViet. Vui lòng kiểm tra lại ID.');
+    }
+
+    const chapters = parseChapterList(data.data);
+    if (chapters.length === 0) {
+      throw new Error('Danh sách chương sau khi phân tách trống hoặc không parse được.');
+    }
+
+    const bookName = (customBookTitle || data.bookname || `Truyện SangTacViet #${bookId}`).trim().replace(/[<>:"/\\|?*]+/g, '');
+
+    const formattedChapters = chapters.map((ch, idx) => ({
+      id: ch.id,
+      title: ch.title,
+      content: '', // Empty content, loaded on-demand
+      number: ch.number || (idx + 1)
+    }));
+
+    await saveBook(bookName, formattedChapters, true, bookId);
+
+    S.chapters = normalizeBookChapters(formattedChapters);
+    S.bookTitle = bookName;
+    S.currentChapter = 0;
+    S.isSangTacViet = true;
+    S.bookId = bookId;
+
+    document.getElementById('bookTitle').textContent = bookName;
+    document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
+    renderChapterList();
+    renderLibrary();
+    loadChapter(0);
+    closeUpload();
+    showToast(`Crawl thành công! Đã lưu truyện "${bookName}" với ${S.chapters.length} chương.`);
+  } catch (error) {
+    console.error('Crawl Error:', error);
+    alert(`Lỗi Crawl: ${error.message || 'Không thể cào dữ liệu từ trang này. Vui lòng kiểm tra lại liên kết hoặc Book ID.'}`);
+  } finally {
+    if (crawlBtn) {
+      crawlBtn.disabled = false;
+      crawlBtn.textContent = originalText;
+    }
+  }
+}
+
 function selectSep(mode, el){
   S.sepMode = mode;
   document.querySelectorAll('.sep-tag').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('customSepRow').style.display = mode==='custom'?'flex':'none';
 }
+
 const CHAPTER_PATTERNS = {
   chapter: {
     re: /^ch[uư][oơ]ng\s*(?:th[uứ]\s*)?(\d+|[ivxlcdmIVXLCDM]+)(\s*[:\s]\s*|\s*$)/i,
@@ -1812,9 +2224,16 @@ function closeMobileSidebar(){
   document.getElementById('mobileSbTabs').classList.remove('mobile-open');
 }
 
-function confirmClearBook(){
+async function confirmClearBook(){
   if(!S.chapters.length){ showToast('Chưa có sách nào trong bộ nhớ'); return; }
-  if(!confirm(`Xóa "${S.bookTitle}" khỏi bộ nhớ?`)){ return; }
+  const confirmed = await showConfirm(
+    'Xóa sách đang đọc',
+    `Bạn có chắc chắn muốn xóa "${S.bookTitle}" khỏi trình đọc?`,
+    '🗑️',
+    'Xóa',
+    'Hủy'
+  );
+  if(!confirmed){ return; }
   if(S.bookTitle) localStorage.removeItem('novreader_pos_' + S.bookTitle);
   S.chapters = []; S.bookTitle = ''; S.currentChapter = 0;
   stopTts();
@@ -1825,10 +2244,10 @@ function confirmClearBook(){
   document.getElementById('readerContent').innerHTML = `
     <div class="welcome" id="welcomeScreen">
       <div class="welcome-icon">📚</div>
-      <h2>Chào mừng đến với NovReader</h2>
-      <p>Tải lên file .txt để bắt đầu đọc sách với hỗ trợ Text-to-Speech</p>
-      <button class="upload-btn" style="width:auto;padding:9px 22px" onclick="openUpload()">
-        <i class="ti ti-upload"></i> Tải lên ngay
+      <h2>Thư viện sách</h2>
+      <p>Tải lên file văn bản .txt để bắt đầu đọc và nghe đọc với giọng đọc AI chất lượng cao</p>
+      <button class="upload-btn" style="width:auto;padding:10px 24px;margin:0 auto;box-shadow:0 4px 12px rgba(201, 169, 110, 0.3)" onclick="openUpload()">
+        <i class="ti ti-upload"></i> Tải sách mới (.txt)
       </button>
     </div>`;
   renderChapterList();
@@ -1840,7 +2259,8 @@ function confirmClearBook(){
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>t.classList.remove('show'), 2500);
 }
 </script>
 </body>

@@ -347,6 +347,14 @@ body.dark-theme{
           <label for="justifyToggle">Căn đều 2 bên</label>
           <input type="checkbox" class="toggle" id="justifyToggle" onchange="updateFont()">
         </div>
+        <div class="toggle-row">
+          <label for="readingLimitToggle">Giới hạn thời gian đọc</label>
+          <input type="checkbox" class="toggle" id="readingLimitToggle" onchange="toggleReadingLimit()">
+        </div>
+        <div class="sp-row" style="margin-top:8px;margin-bottom:0">
+          <label for="readingLimitMinutes">Thời gian (phút)</label>
+          <input type="number" class="sp-num" min="1" max="720" value="30" id="readingLimitMinutes" oninput="updateReadingLimitMinutes()">
+        </div>
       </div>
     </div>
 
@@ -497,7 +505,14 @@ const S = {
   ttsActive: false, ttsPlaying: false,
   ttsVoice: null, ttsRate: 1, ttsVol: 1, ttsPitch: 1,
   ttsWords: [], ttsCursor: 0, ttsUtterance: null,
-  mobileOpen: false
+  mobileOpen: false,
+  autoNextPending: false,
+  restoringScroll: false,
+  readLimitEnabled: false,
+  readLimitMinutes: 30,
+  readLimitTimer: null,
+  readLimitDeadline: null,
+  readLimitExpired: false
 };
 
 
@@ -585,6 +600,9 @@ async function openBookFromLibrary(name){
     document.getElementById('bookTitle').textContent = saved.name;
     document.getElementById('bookInfo').textContent = `${saved.chapters.length} chương`;
     renderChapterList();
+    S.readLimitExpired = false;
+    S.readLimitDeadline = null;
+    stopReadingLimitTimer();
     loadChapter(S.currentChapter);
     showToast(`Đã mở “${saved.name}”`);
     
@@ -644,7 +662,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     let scrollRAF = null;
     let saveScrollTimeout = null;
 
-    rc.addEventListener('scroll', () => {
+    rc.addEventListener('scroll', (event) => {
       // Gộp các lần scroll liên tiếp vào 1 khung hình (rAF) để tránh layout thrashing
       if(scrollRAF) return;
       scrollRAF = requestAnimationFrame(() => {
@@ -669,6 +687,27 @@ window.addEventListener('DOMContentLoaded', async () => {
         if(topBar){
           topBar.style.width = (pct * 100) + '%';
         }
+
+        const isUserScroll = event.isTrusted === true;
+        if(
+          isUserScroll &&
+          !S.restoringScroll &&
+          !S.autoNextPending &&
+          !isReadingLimitLocked() &&
+          scrollH > 0 &&
+          pct >= 0.995 &&
+          S.currentChapter < S.chapters.length - 1
+        ){
+          const chapterBeforeJump = S.currentChapter;
+          S.autoNextPending = true;
+          setTimeout(() => {
+            if(S.currentChapter === chapterBeforeJump && !isReadingLimitLocked()){
+              loadChapter(chapterBeforeJump + 1);
+              showToast('Đã tự chuyển sang chương tiếp theo');
+            }
+            S.autoNextPending = false;
+          }, 180);
+        }
       });
 
       // Lưu vị trí đọc vào localStorage — debounce 400ms để tránh ghi liên tục
@@ -692,6 +731,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('paddingSlider').value = s.padding || 32;
       document.getElementById('paraSpaceSlider').value = s.paraSpace || 1.2;
       document.getElementById('justifyToggle').checked = !!s.justify;
+      S.readLimitEnabled = !!s.readLimitEnabled;
+      const loadedReadLimitMinutes = parseInt(s.readLimitMinutes || 30);
+      S.readLimitMinutes = Math.max(1, isNaN(loadedReadLimitMinutes) ? 30 : loadedReadLimitMinutes);
+      const readingLimitToggle = document.getElementById('readingLimitToggle');
+      const readingLimitMinutes = document.getElementById('readingLimitMinutes');
+      if(readingLimitToggle) readingLimitToggle.checked = S.readLimitEnabled;
+      if(readingLimitMinutes) readingLimitMinutes.value = S.readLimitMinutes;
     }
     const f = localStorage.getItem('novreader_font');
     if(f) {
@@ -721,6 +767,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Render Library
   renderLibrary();
+  updateReadingLimitUI();
 
   // Service Worker chỉ hoạt động khi trang được phục vụ qua http/https.
   // Nếu mở trực tiếp file index.html (giao thức file://), bỏ qua để tránh lỗi
@@ -756,6 +803,10 @@ function renderChapterList(){
 }
 
 function loadChapter(idx){
+  if(isReadingLimitLocked()){
+    showToast('Đã hết thời gian đọc. Tắt giới hạn để tiếp tục.');
+    return;
+  }
   stopTts();
   S.currentChapter = idx;
   if(S.bookTitle) localStorage.setItem('novreader_pos_' + S.bookTitle, idx);
@@ -813,17 +864,20 @@ function loadChapter(idx){
   }
   // Use setTimeout to allow DOM to render before scrolling
   setTimeout(() => {
+    S.restoringScroll = true;
     rc.scrollTop = savedScroll;
     rc.dispatchEvent(new Event('scroll'));
+    requestAnimationFrame(() => { S.restoringScroll = false; });
   }, 0);
   const sel = document.getElementById('chapterSelect');
   if(sel) sel.value = idx;
   if(S.ttsActive) prepareTtsWords();
+  if(S.readLimitEnabled) startReadingLimit();
 }
 
 // ===================== NAVIGATION =====================
-function prevChapter(){ if(S.currentChapter>0) loadChapter(S.currentChapter-1); }
-function nextChapter(){ if(S.currentChapter<S.chapters.length-1) loadChapter(S.currentChapter+1); }
+function prevChapter(){ if(!isReadingLimitLocked() && S.currentChapter>0) loadChapter(S.currentChapter-1); }
+function nextChapter(){ if(!isReadingLimitLocked() && S.currentChapter<S.chapters.length-1) loadChapter(S.currentChapter+1); }
 
 // ===================== TTS =====================
 let synth = window.speechSynthesis;
@@ -886,6 +940,7 @@ function toggleTtsBar(){
 
 function togglePlay(){
   if(!S.chapters.length){ showToast('Chưa có truyện nào để đọc'); return; }
+  if(isReadingLimitLocked()){ showToast('Đã hết thời gian đọc. Tắt giới hạn để tiếp tục.'); return; }
   if(S.ttsPlaying){ pauseTts(); } else { speakFrom(S.ttsCursor); }
 }
 
@@ -1049,14 +1104,85 @@ function updateFont(){
     }
   }
   
-  // Save settings (debounce để tránh ghi localStorage liên tục khi người dùng kéo/chỉnh nhanh)
-  clearTimeout(updateFont._saveTimer);
-  updateFont._saveTimer = setTimeout(() => {
+  persistReadingSettings();
+}
+
+function persistReadingSettings(){
+  clearTimeout(persistReadingSettings._saveTimer);
+  persistReadingSettings._saveTimer = setTimeout(() => {
     localStorage.setItem('novreader_settings', JSON.stringify({
       fontSize: S.fontSize, lineH: S.lineH, width: S.width,
-      padding: S.padding, paraSpace: S.paraSpace, justify: S.justify
+      padding: S.padding, paraSpace: S.paraSpace, justify: S.justify,
+      readLimitEnabled: S.readLimitEnabled, readLimitMinutes: S.readLimitMinutes
     }));
   }, 300);
+}
+
+function updateReadingLimitUI(){
+  const readingLimitMinutes = document.getElementById('readingLimitMinutes');
+  if(readingLimitMinutes){
+    readingLimitMinutes.disabled = !S.readLimitEnabled;
+    readingLimitMinutes.value = S.readLimitMinutes;
+    readingLimitMinutes.style.opacity = S.readLimitEnabled ? '1' : '.55';
+  }
+}
+
+function isReadingLimitLocked(){
+  return S.readLimitEnabled && S.readLimitExpired;
+}
+
+function stopReadingLimitTimer(){
+  clearTimeout(S.readLimitTimer);
+  S.readLimitTimer = null;
+}
+
+function startReadingLimit(forceReset = false){
+  if(!S.readLimitEnabled || !S.chapters.length) return;
+  if(forceReset){
+    S.readLimitExpired = false;
+    S.readLimitDeadline = null;
+  }
+  if(S.readLimitExpired) return;
+  if(!S.readLimitDeadline){
+    S.readLimitDeadline = Date.now() + (S.readLimitMinutes * 60 * 1000);
+  }
+  const remain = S.readLimitDeadline - Date.now();
+  if(remain <= 0){
+    handleReadingLimitReached();
+    return;
+  }
+  stopReadingLimitTimer();
+  S.readLimitTimer = setTimeout(handleReadingLimitReached, remain);
+}
+
+function handleReadingLimitReached(){
+  S.readLimitExpired = true;
+  stopReadingLimitTimer();
+  stopTts();
+  showToast('Đã hết thời gian đọc theo giới hạn đã đặt');
+}
+
+function toggleReadingLimit(){
+  const toggle = document.getElementById('readingLimitToggle');
+  S.readLimitEnabled = !!toggle?.checked;
+  if(S.readLimitEnabled){
+    startReadingLimit(true);
+  } else {
+    S.readLimitExpired = false;
+    S.readLimitDeadline = null;
+    stopReadingLimitTimer();
+  }
+  updateReadingLimitUI();
+  persistReadingSettings();
+}
+
+function updateReadingLimitMinutes(){
+  const input = document.getElementById('readingLimitMinutes');
+  const val = Math.max(1, Math.min(720, parseInt(input?.value || '30') || 30));
+  S.readLimitMinutes = val;
+  if(input) input.value = val;
+  if(S.readLimitEnabled) startReadingLimit(true);
+  persistReadingSettings();
 }
 
 // ===================== TABS =====================
@@ -1344,6 +1470,9 @@ function doParse(text, name){
   document.getElementById('bookTitle').textContent = name;
   document.getElementById('bookInfo').textContent = `${validChapters.length} chương`;
   renderChapterList();
+  S.readLimitExpired = false;
+  S.readLimitDeadline = null;
+  stopReadingLimitTimer();
   loadChapter(S.currentChapter);
   saveBook(name, validChapters); // persist to IndexedDB
   closeUpload();

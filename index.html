@@ -79,16 +79,41 @@ body.dark-theme{
 .icon-btn.active{background:var(--gold3);color:var(--accent);border-color:var(--gold)}
 
 /* TTS MINI PLAYER */
-.tts-bar{position:fixed;bottom:20px;left:46px;right:16px;max-width:min(620px,calc(100vw - 62px));height:54px;background:var(--paper);border:1px solid var(--paper3);border-radius:27px;padding:0 16px 0 58px;display:flex;flex-direction:row;align-items:center;gap:12px;width:auto;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:120;transform-origin:left center;transform:scaleX(1);opacity:1;transition:transform .32s ease,opacity .25s ease,border-color .25s}
+.tts-bar{
+  position:fixed;
+  bottom:20px;
+  left:20px; 
+  right:16px;
+  max-width:min(620px,calc(100vw - 36px));
+  height:54px;
+  background:var(--paper);
+  border:1px solid var(--paper3);
+  border-radius:27px;
+  padding:0 16px 0 64px; 
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15);
+  z-index:110; 
+  transform-origin:27px center;
+  transform:scaleX(1);
+  opacity:1;
+  transition:transform .35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity .3s ease;
+}
 .dark-theme .tts-bar{box-shadow:0 4px 20px rgba(0,0,0,0.4);border-color:#333}
-.tts-bar.hidden{transform:scaleX(.15);opacity:0;pointer-events:none}
+.tts-bar.hidden{
+  transform:scaleX(0);
+  opacity:0;
+  pointer-events:none;
+}
 .tts-title{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
 .tts-controls{display:flex;align-items:center;justify-content:center;gap:6px}
 .tts-btn{background:transparent;border:none;color:var(--ink2);cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;font-size:20px;line-height:1;transition:background .15s}
 .tts-btn:hover{background:var(--paper3);color:var(--ink)}
 .tts-btn.play-pause{width:36px;height:36px;background:var(--gold);color:#1a1612;justify-content:center;font-size:16px}
 .tts-btn.play-pause:hover{background:var(--gold2)}
-.tts-rate,.tts-voice-sel{display:none} /* Hide select boxes in mini player, user can use Sidebar TTS tab */
+.tts-rate,.tts-voice-sel{display:none}
 .tts-word-highlight{background:var(--gold3);color:var(--accent);border-radius:2px;transition:all .1s}
 
 /* READING PROGRESS BAR */
@@ -116,6 +141,7 @@ body.dark-theme{
 .sb-pane{display:none;flex:1;overflow-y:auto;scrollbar-width:none}
 .sb-pane::-webkit-scrollbar{display:none}
 .sb-pane.active{display:block}
+
 /* SETTINGS PANEL IN SIDEBAR */
 .sp-section{padding:12px 14px;border-bottom:.5px solid var(--paper3)}
 .sp-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
@@ -138,10 +164,6 @@ body.dark-theme{
 .toggle:checked{background:var(--gold)}
 .toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle:checked::after{left:19px}
-.bm-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:.5px solid var(--paper3)}
-.bm-item:last-child{border-bottom:none}
-.bm-link{font-size:12px;color:var(--accent);cursor:pointer;flex:1;margin-right:8px}
-.bm-del{font-size:17px;color:var(--ink3);cursor:pointer;background:none;border:none;line-height:1;padding:2px}
 .chapter-select{width:100%;padding:9px 10px;background:var(--paper3);border:1.5px solid transparent;color:var(--ink);border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer}
 .chapter-select:focus{border-color:var(--gold)}
 /* TTS SECTION */
@@ -151,11 +173,10 @@ body.dark-theme{
 .voice-item:last-child{border-bottom:none}
 .voice-item:hover{background:var(--paper3)}
 .voice-item.active{background:var(--gold3);color:var(--accent)}
-/* select styling */
 .sp-select{width:100%;padding:7px 10px;background:var(--paper3);border:1px solid transparent;color:var(--ink);border-radius:6px;font-size:13px;outline:none;font-family:'Inter',sans-serif;cursor:pointer;margin-top:4px}
 .sp-select:focus{border-color:var(--gold)}
 
-/* UPLOAD MODAL */
+/* UPLOAD & BOOK DETAIL MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(26,22,18,.75);display:none;align-items:center;justify-content:center;z-index:200}
 .modal-overlay.open{display:flex}
 .modal{background:var(--paper);border-radius:12px;padding:24px;width:460px;max-width:92%;max-height:90vh;overflow-y:auto}
@@ -189,14 +210,6 @@ body.dark-theme{
 /* DRIVE PANEL */
 .drive-panel{position:fixed;top:62px;right:12px;background:var(--paper);border:.5px solid var(--paper3);border-radius:10px;padding:14px;width:210px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:100;display:none}
 .drive-panel.open{display:block}
-.dp-head{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:10px}
-.dp-btn{width:100%;padding:7px 10px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:6px;display:flex;align-items:center;gap:8px;border:none}
-.dp-btn.drive{background:#e8f0fe;color:#1a73e8}
-.dp-btn.drive:hover{background:#d2e3fc}
-.dp-btn.fb{background:#fff3e0;color:#e65100}
-.dp-btn.fb:hover{background:#ffe0b2}
-.dp-status{font-size:11px;color:var(--gold2);margin-top:4px;text-align:center;display:none}
-.dp-status.show{display:block}
 
 /* WELCOME & LIBRARY */
 .welcome{text-align:center;padding:40px 20px;max-width:800px;margin:10vh auto 0;color:var(--ink)}
@@ -217,17 +230,49 @@ body.dark-theme{
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1612;color:#e8d4a8;padding:9px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 
-/* MOBILE */
+/* MOBILE RESPONSIVE FIXES */
 @media(max-width:640px){
   .reader-content{padding:20px 16px 120px}
   .floating-menu-btn{bottom:calc(20px + env(safe-area-inset-bottom))}
-  .tts-bar{left:46px;right:10px;bottom:calc(20px + env(safe-area-inset-bottom));max-width:calc(100vw - 56px);width:auto;height:54px;border-radius:27px}
-  .tts-title{max-width:calc(100% - 140px)}
+  
+  /* Tách thanh tab ra, đặt nó nằm ngay trên nút Floating */
+  .sb-tabs {
+    position: fixed;
+    bottom: 85px; 
+    left: 20px;
+    z-index: 160;
+    background: var(--paper);
+    border: 1px solid var(--paper3);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    transform-origin: bottom center;
+    transform: translateY(20px) scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: all .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  .sidebar.mobile-open .sb-tabs,
+  body:has(.sidebar.mobile-open) .sb-tabs {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Thu gọn sidebar chính và đẩy sang phải */
+  .sidebar {
+    left: 85px;
+    width: calc(100% - 105px);
+    transform-origin: bottom left;
+    transform: translateY(-50%) scale(0.9);
+  }
+  .sidebar.mobile-open {
+    transform: translateY(-50%) scale(1);
+  }
+
   .chapter-heading{font-size:18px}
   .chapter-body.dropcap p:first-child::first-letter{font-size:40px}
   .btn-ghost{padding:10px 14px;font-size:13px;min-width:90px}
-  .sb-tabs{width:52px;padding:10px 4px}
-  .sb-tab{width:36px;height:36px}
 }
 </style>
 </head>
@@ -236,7 +281,6 @@ body.dark-theme{
 <div class="top-progress-bar" id="topProgressBar"></div>
 
 <div class="main">
-  <!-- FLOATING MENU BUTTON WITH PROGRESS RING -->
   <button class="floating-menu-btn" id="floatingBtn" onclick="toggleMobileSidebar()" aria-label="Menu">
     <div class="fmb-inner">
       <svg class="fmb-ring" viewBox="0 0 54 54" width="54" height="54">
@@ -250,7 +294,6 @@ body.dark-theme{
     <span class="fmb-pct" id="fmbPctLabel">0%</span>
   </button>
 
-  <!-- SIDEBAR (MODAL) -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -267,21 +310,19 @@ body.dark-theme{
     </div>
 
     <div class="sidebar-body">
-      <!-- TABS -->
       <div class="sb-tabs">
-        <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap" title="Chương" aria-label="Chương">
+        <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap" title="Chương">
           <i class="ti ti-list"></i><span>Chương</span>
         </button>
-        <button class="sb-tab" onclick="switchTab('read',this)" id="tabRead" title="Đọc" aria-label="Đọc">
+        <button class="sb-tab" onclick="switchTab('read',this)" id="tabRead" title="Đọc">
           <i class="ti ti-text-size"></i><span>Đọc</span>
         </button>
-        <button class="sb-tab" onclick="switchTab('tts',this)" id="tabTts" title="TTS" aria-label="TTS">
+        <button class="sb-tab" onclick="switchTab('tts',this)" id="tabTts" title="TTS">
           <i class="ti ti-volume"></i><span>TTS</span>
         </button>
       </div>
 
       <div class="sb-content">
-      <!-- TAB: CHAPTER -->
       <div class="sb-pane active" id="paneChap">
       <div class="sp-section">
         <div class="sp-label" style="margin-bottom:8px">Chương hiện tại</div>
@@ -306,7 +347,6 @@ body.dark-theme{
       </div>
     </div>
 
-    <!-- TAB: READING SETTINGS -->
     <div class="sb-pane" id="paneRead">
       <div class="sp-section">
         <div class="sp-label">Văn bản</div>
@@ -380,7 +420,6 @@ body.dark-theme{
       </div>
     </div>
 
-    <!-- TAB: TTS -->
     <div class="sb-pane" id="paneTts">
       <div class="sp-section">
         <div class="sp-label">Bật/Tắt TTS</div>
@@ -434,7 +473,6 @@ body.dark-theme{
     </div>
   </div>
 
-  <!-- TTS MINI PLAYER -->
   <div class="tts-bar hidden" id="ttsBar">
     <div class="tts-title" id="ttsLabel">Đang tải...</div>
     <div class="tts-controls">
@@ -447,9 +485,7 @@ body.dark-theme{
     </div>
   </div>
 
-  <!-- READER -->
   <div class="reader">
-    <!-- PANELS -->
     <div class="panels-wrap">
       <div class="reader-content" id="readerContent">
         <div class="welcome" id="welcomeScreen">
@@ -467,7 +503,6 @@ body.dark-theme{
   </div>
 </div>
 
-<!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
     <h3>Tải lên sách</h3>
@@ -520,11 +555,31 @@ body.dark-theme{
   </div>
 </div>
 
-<!-- DRIVE PANEL (Hidden) -->
+<div class="modal-overlay" id="bookDetailModal">
+  <div class="modal" style="width: 400px; text-align: center;">
+    <h3 id="detailBookTitle" style="font-size: 20px; margin-bottom: 8px;">Tên truyện</h3>
+    <p id="detailBookInfo" style="color: var(--ink3); font-size: 13px; margin-bottom: 24px;">Thông tin số chương</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button class="btn-ok" id="btnContinueRead" style="padding: 12px; font-size: 15px;">
+        <i class="ti ti-book"></i> Đọc tiếp (Chương <span id="detailCurrentChap">1</span>)
+      </button>
+      <button class="btn-ghost" onclick="startReadingFrom(0)" style="padding: 12px;">
+        <i class="ti ti-rotate-clockwise"></i> Đọc lại từ đầu
+      </button>
+      <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <button class="btn-ghost" onclick="closeBookDetail()" style="flex: 1;">Đóng</button>
+        <button class="btn-ghost" id="btnDeleteBook" style="color: #e65100; flex: 1;">
+          <i class="ti ti-trash"></i> Xóa sách
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="drive-panel" id="drivePanel" style="display:none">
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -550,8 +605,6 @@ const S = {
   readLimitDeadline: null,
   readLimitExpired: false
 };
-
-
 
 // ===================== INDEXEDDB PERSISTENCE =====================
 const DB_NAME = 'NovReaderDB', DB_VER = 1, STORE = 'books';
@@ -634,7 +687,9 @@ function formatBookChapterInfo(chapters = S.chapters){
   return `${chapterCount} chương`;
 }
 
-// ===================== LIBRARY UI =====================
+// ===================== LIBRARY UI & BOOK DETAILS =====================
+let selectedBookName = '';
+
 async function renderLibrary(){
   const grid = document.getElementById('libraryGrid');
   if(!grid) return;
@@ -661,24 +716,59 @@ async function renderLibrary(){
   }).join('');
 }
 
+// Hiển thị modal thay vì mở sách ngay
 async function openBookFromLibrary(name){
   const saved = await loadBook(name);
   if(saved && saved.chapters && saved.chapters.length){
+    selectedBookName = name;
+    const chapters = normalizeBookChapters(saved.chapters);
+    
+    let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + name) || '0');
+    const maxIndex = Math.max(chapters.length - 1, 0);
+    savedIdx = Number.isNaN(savedIdx) ? 0 : Math.min(Math.max(savedIdx, 0), maxIndex);
+    
+    // Gắn dữ liệu vào Modal
+    document.getElementById('detailBookTitle').textContent = name;
+    document.getElementById('detailBookInfo').textContent = formatBookChapterInfo(chapters) + ` • Đã đọc ${Math.round(((savedIdx+1)/chapters.length)*100)}%`;
+    document.getElementById('detailCurrentChap').textContent = savedIdx + 1;
+    
+    // Gắn event đọc tiếp và xoá
+    document.getElementById('btnContinueRead').onclick = () => startReadingFrom(savedIdx);
+    document.getElementById('btnDeleteBook').onclick = () => {
+      closeBookDetail();
+      removeBookFromLibrary(name);
+    };
+
+    document.getElementById('bookDetailModal').classList.add('open');
+  }
+}
+
+function closeBookDetail() {
+  document.getElementById('bookDetailModal').classList.remove('open');
+}
+
+// Logic load sách thực sự
+async function startReadingFrom(chapIndex) {
+  closeBookDetail();
+  if(!selectedBookName) return;
+  
+  const saved = await loadBook(selectedBookName);
+  if(saved) {
     S.chapters = normalizeBookChapters(saved.chapters);
     S.bookTitle = saved.name;
-    let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + saved.name) || '0');
-    S.currentChapter = savedIdx < S.chapters.length ? savedIdx : 0;
+    S.currentChapter = chapIndex;
+    
     document.getElementById('bookTitle').textContent = saved.name;
     document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
+    
     renderChapterList();
     S.readLimitExpired = false;
     S.readLimitDeadline = null;
     stopReadingLimitTimer();
+    
     loadChapter(S.currentChapter);
     showToast(`Đã mở “${saved.name}”`);
-    
-    // Update last accessed
-    saveBook(saved.name, S.chapters);
+    saveBook(saved.name, S.chapters); // Cập nhật lastAccessed
   }
 }
 
@@ -723,10 +813,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   initTTS();
   
-  // Set up scroll listener for progress ring and bar
   const rc = document.getElementById('readerContent');
   if(rc){
-    // Cache các phần tử tĩnh 1 lần thay vì querying lại mỗi lần scroll (đỡ tốn DOM lookup)
     const ring = document.getElementById('fmbProgressCircle');
     const pctLabel = document.getElementById('fmbPctLabel');
     const topBar = document.getElementById('topProgressBar');
@@ -734,7 +822,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     let saveScrollTimeout = null;
 
     rc.addEventListener('scroll', () => {
-      // Gộp các lần scroll liên tiếp vào 1 khung hình (rAF) để tránh layout thrashing
       if(scrollRAF) return;
       scrollRAF = requestAnimationFrame(() => {
         scrollRAF = null;
@@ -749,7 +836,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             ring.style.strokeDashoffset = 0;
             pctLabel.textContent = '100%';
           } else {
-            // dash array is ~150.8
             ring.style.strokeDashoffset = 150.8 - (150.8 * pct);
             pctLabel.textContent = Math.round(pct * 100) + '%';
           }
@@ -758,11 +844,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         if(topBar){
           topBar.style.width = (pct * 100) + '%';
         }
-
       });
 
-      // Lưu vị trí đọc vào localStorage — debounce 400ms để tránh ghi liên tục
-      // (localStorage là I/O đồng bộ, ghi mỗi tick scroll sẽ gây giật trên máy yếu)
       if(S.bookTitle){
         clearTimeout(saveScrollTimeout);
         saveScrollTimeout = setTimeout(() => {
@@ -854,7 +937,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, { passive: true });
   }
 
-  // Load user settings
   try {
     const s = JSON.parse(localStorage.getItem('novreader_settings'));
     if(s) {
@@ -886,7 +968,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   } catch(e){}
 
-  // Khôi phục truyện cũ (nếu dùng version cũ key='current') -> Migrate
   try{
     const db = await openDB();
     const req = db.transaction(STORE,'readonly').objectStore(STORE).get('current');
@@ -898,13 +979,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   }catch(e){}
 
-  // Render Library
   renderLibrary();
   updateReadingLimitUI();
 
-  // Service Worker chỉ hoạt động khi trang được phục vụ qua http/https.
-  // Nếu mở trực tiếp file index.html (giao thức file://), bỏ qua để tránh lỗi
-  // "Request scheme 'file' is unsupported" khi Cache API cố addAll().
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('SW reg failed', err));
   }
@@ -963,7 +1040,7 @@ function loadChapter(idx){
     }).join(' ');
     return `<p>${spans}</p>`;
   }).join('');
-  // Hide welcome, show chapter content
+  
   const welcome = document.getElementById('welcomeScreen');
   if(welcome) welcome.style.display = 'none';
   let cc = document.getElementById('chapterContent');
@@ -989,14 +1066,12 @@ function loadChapter(idx){
   S.ttsWords = wordSpans;
   S.ttsCursor = 0;
   updateTtsProgress();
-  // Update font settings including padding
   updateFont();
-  // Restore scroll position
+  
   let savedScroll = 0;
   if(S.bookTitle){
     savedScroll = parseInt(localStorage.getItem(`novreader_scroll_${S.bookTitle}_${idx}`) || '0');
   }
-  // Use setTimeout to allow DOM to render before scrolling
   setTimeout(() => {
     S.restoringScroll = true;
     rc.scrollTop = savedScroll;
@@ -1017,6 +1092,7 @@ function nextChapter(){ if(!isReadingLimitLocked() && S.currentChapter<S.chapter
 let synth = window.speechSynthesis;
 let allVoices = [];
 let ttsTimeout = null;
+let currentUtterance = null; 
 
 function initTTS(){
   if(!synth){ showToast('Trình duyệt không hỗ trợ TTS'); return; }
@@ -1078,9 +1154,6 @@ function togglePlay(){
   if(S.ttsPlaying){ pauseTts(); } else { speakFrom(S.ttsCursor); }
 }
 
-// Biến toàn cục để giữ tham chiếu tránh bị Garbage Collector xóa mất
-let currentUtterance = null; 
-
 function speakFrom(startIdx) {
   if (!synth) return;
   synth.cancel();
@@ -1093,12 +1166,10 @@ function speakFrom(startIdx) {
     return;
   }
 
-  // Tăng số lượng từ mỗi chu kỳ lên 100-150 từ để giảm tần suất gọi lại, tránh nghẽn bộ nhớ
   const chunkSize = 120; 
   const chunk = S.ttsWords.slice(startIdx, startIdx + chunkSize);
   const text = chunk.map(w => w.text).join(' ');
   
-  // Gán vào biến toàn cục thay vì biến cục bộ (const utter)
   currentUtterance = new SpeechSynthesisUtterance(text);
   currentUtterance.lang = 'vi-VN';
   if (S.currentVoice || S.ttsVoice) currentUtterance.voice = S.ttsVoice;
@@ -1120,7 +1191,6 @@ function speakFrom(startIdx) {
     S.ttsCursor = startIdx + chunk.length;
     clearHighlight();
     if (S.ttsCursor < S.ttsWords.length) {
-      // Đảm bảo giải phóng bộ nhớ cũ trước khi gọi lượt tiếp theo
       currentUtterance = null; 
       ttsTimeout = setTimeout(() => speakFrom(S.ttsCursor), 50);
     } else {
@@ -1131,7 +1201,6 @@ function speakFrom(startIdx) {
   };
 
   currentUtterance.onerror = (event) => {
-    // Nếu lỗi do bị hủy chủ động (synth.cancel) thì bỏ qua, nếu lỗi hệ thống thì dừng
     if (event.error !== 'interrupted') {
       S.ttsPlaying = false; 
       updatePlayBtn();
@@ -1166,18 +1235,9 @@ function skipTts(delta){
   else updateTtsProgress();
 }
 
-function seekTts(e){
-  const rect = document.getElementById('ttsTrack').getBoundingClientRect();
-  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  S.ttsCursor = Math.floor(pct * S.ttsWords.length);
-  if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); }
-  else updateTtsProgress();
-}
-
 function changeRate(v){ S.ttsRate = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
 function changeVol(v){ S.ttsVol = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
 function changePitch(v){ S.ttsPitch = parseFloat(v); if(S.ttsPlaying){ synth.cancel(); speakFrom(S.ttsCursor); } }
-
 
 function highlightWord(wi){
   clearHighlight();
@@ -1355,9 +1415,6 @@ function toggleGlobalDark(){
   localStorage.setItem('globalDark', S.globalDark);
 }
 
-
-
-
 // ===================== UPLOAD =====================
 function openUpload(){
   S.pendingText = ''; S.pendingName = '';
@@ -1384,14 +1441,7 @@ function selectSep(mode, el){
   el.classList.add('active');
   document.getElementById('customSepRow').style.display = mode==='custom'?'flex':'none';
 }
-// ---- Toàn bộ pattern hỗ trợ ----
-// Mỗi entry: { re: RegExp để DETECT dòng tiêu đề, split: RegExp để TÁCH title/subtitle }
 const CHAPTER_PATTERNS = {
-  // ── "Chương 1"  "Chương 100"  "Chương100"
-  // ── "Chương 1:" "Chương 102:" "Chương 102: Tên chương"
-  // ── "Chuong 1"  "Chuong 102:"
-  // ── "Chương thứ 5"  "Chương thứ mười"
-  // ── "Chương I"  "Chương IV"
   chapter: {
     re: /^ch[uư][oơ]ng\s*(?:th[uứ]\s*)?(\d+|[ivxlcdmIVXLCDM]+)(\s*[:\s]\s*|\s*$)/i,
     split: (line) => {
@@ -1400,9 +1450,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── "Thứ 21 chương đường nhỏ dịch trạm"
-  //    title = "Thứ 21 chương", subtitle = "đường nhỏ dịch trạm"
   thu: {
     re: /^th[uứ]\s+\d+\s+ch[uư][oơ]ng/i,
     split: (line) => {
@@ -1411,8 +1458,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── Tự động: match cả "Thứ XX chương ..." lẫn "Chương XX:" trong cùng 1 file
   auto: {
     re: /^(ch[uư][oơ]ng\s*(?:th[uứ]\s*)?(\d+|[ivxlcdmIVXLCDM]+)(\s*[:\s]\s*|\s*$)|th[uứ]\s+\d+\s+ch[uư][oơ]ng)/i,
     split: (line) => {
@@ -1423,8 +1468,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── "Chapter 1"  "Chapter 100"  "Chapter 1: Title"
   chapter_en: {
     re: /^chapter\s*[\d\w]+[\s:]/i,
     split: (line) => {
@@ -1433,8 +1476,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── "Hồi 1"  "Hồi 100"  "Hồi 1: Tên"
   hoi: {
     re: /^h[oồ]i\s*\d+[\s:]/i,
     split: (line) => {
@@ -1443,8 +1484,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── "Phần 1"  "Phần 100"  "Phần 1: Tên"
   phan: {
     re: /^ph[aầ]n\s*\d+[\s:]/i,
     split: (line) => {
@@ -1453,8 +1492,6 @@ const CHAPTER_PATTERNS = {
       return { title: line.trim(), subtitle: '' };
     }
   },
-
-  // ── Dòng phân cách: ---  ===  ***  ~~~  ___
   separator: {
     re: /^([-=*_~]{3,}|[—–]{2,})$/,
     split: null
@@ -1475,7 +1512,6 @@ function splitTitleSubtitle(line, mode) {
   return def.split(line);
 }
 
-// Auto-detect: scan đầu + giữa + cuối file để phát hiện format
 function autoDetectFormat(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const counts = {};
@@ -1483,17 +1519,17 @@ function autoDetectFormat(text) {
   for (let i = 0; i < lines.length; i += step) {
     const line = lines[i];
     for (const [key, {re}] of Object.entries(CHAPTER_PATTERNS)) {
-      if (key === 'auto') continue; // bỏ qua auto khi detect
+      if (key === 'auto') continue; 
       if (re.test(line)) counts[key] = (counts[key]||0) + 1;
     }
   }
-  // Nếu có cả thu lẫn chapter → dùng auto
   if ((counts.thu || 0) > 0 && (counts.chapter || 0) > 0) {
     return 'auto';
   }
   const best = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
   return best ? best[0] : 'auto';
 }
+
 function handleFile(e){ const f=e.target.files[0]; if(f) parseFile(f); }
 function handleDrop(e){
   e.preventDefault();
@@ -1515,7 +1551,6 @@ function triggerParse(){
   doParse(S.pendingText, bookTitle || 'Sách mới', introTitle || 'Giới thiệu', introContent);
 }
 
-let pendingReader = null;
 function parseFile(file){
   if(!file.name.endsWith('.txt')){
     showToast('Vui lòng chọn file .txt!');
@@ -1524,13 +1559,12 @@ function parseFile(file){
   S.pendingName = file.name.replace(/\.txt$/i,'');
   const titleInput = document.getElementById('bookTitleInput');
   if(titleInput && !titleInput.value.trim()) titleInput.value = S.pendingName;
-  S.pendingText = ''; // clear while loading
+  S.pendingText = ''; 
   const parseBtn = document.getElementById('parseBtn');
   if(parseBtn){ parseBtn.textContent = 'Đang đọc file...'; parseBtn.disabled = true; }
   const r = new FileReader();
   r.onload = e => {
     S.pendingText = e.target.result;
-    // Show file name in dropzone
     const dropP = document.querySelector('.drop-zone p');
     if(dropP) dropP.textContent = '📄 '+file.name;
     if(parseBtn){ parseBtn.textContent = 'Xử lý & Đọc'; parseBtn.disabled = false; }
@@ -1543,29 +1577,21 @@ function parseFile(file){
 }
 
 function doParse(text, name, manualIntroTitle = 'Giới thiệu', manualIntroContent = ''){
-  // Auto-detect chỉ khi người dùng chọn "chapter" (default cũ) và chưa chọn gì
-  // Khi đã là 'auto' thì dùng luôn pattern auto (match cả hai format)
-  if (S.sepMode !== 'auto' && S.sepMode !== 'custom' && S.sepMode !== 'separator') {
-    // Người dùng đã chọn rõ mode → dùng luôn, không auto-detect
-  }
-  // Nếu là auto → detect để log thôi, không đổi mode
   if (S.sepMode === 'auto') {
-    autoDetectFormat(text); // chỉ để log counts ra console
+    autoDetectFormat(text); 
   }
 
   const pattern = getPattern();
-
   const isSeparator = S.sepMode === 'separator';
   const lines = text.split(/\r?\n/);
   const chapters = [];
   let current = null, buf = [], sepCount = 0;
   let matchCount = 0;
   const matchedTitles = [];
-  const introBuf = []; // nội dung trước chương/phần đầu tiên (lời tựa, giới thiệu...)
+  const introBuf = []; 
 
   for(const line of lines){
     const t = line.trim();
-
     if(isSeparator) {
       if(/^([-=*_~]{3,}|[—–]{2,})$/.test(t)) {
         if(current){ current.content = buf.join('\n\n').trim(); chapters.push(current); }
@@ -1589,14 +1615,12 @@ function doParse(text, name, manualIntroTitle = 'Giới thiệu', manualIntroCon
         buf = [];
       } else {
         if(current) buf.push(t);
-        else introBuf.push(t); // chưa gặp chương nào → lưu tạm vào phần giới thiệu
+        else introBuf.push(t); 
       }
     }
   }
   if(current){ current.content = buf.join('\n\n').trim(); chapters.push(current); }
 
-  // Nếu có nội dung xuất hiện trước chương đầu tiên (lời tựa, giới thiệu, lời nói đầu...)
-  // → gom vào "Chương 0" để không bị bỏ sót, thay vì xóa mất.
   if(!isSeparator){
     const mergedIntro = [introBuf.join('\n\n').trim(), manualIntroContent.trim()].filter(Boolean).join('\n\n');
     if(mergedIntro.length > 10){
@@ -1624,7 +1648,7 @@ function doParse(text, name, manualIntroTitle = 'Giới thiệu', manualIntroCon
   S.readLimitDeadline = null;
   stopReadingLimitTimer();
   loadChapter(S.currentChapter);
-  saveBook(name, S.chapters); // persist to IndexedDB
+  saveBook(name, S.chapters); 
   renderLibrary();
   closeUpload();
   showToast(`Đã tải "${name}" — ${formatBookChapterInfo(S.chapters)}`);
@@ -1654,6 +1678,7 @@ async function editBookTitle(){
   renderLibrary();
   showToast('Đã cập nhật tiêu đề truyện');
 }
+
 async function editBookIntro(){
   if(!S.bookTitle || !S.chapters.length){ showToast('Chưa có truyện nào để chỉnh sửa'); return; }
   const introIdx = getIntroChapterIndex();
@@ -1706,7 +1731,6 @@ function closeMobileSidebar(){
 function confirmClearBook(){
   if(!S.chapters.length){ showToast('Chưa có sách nào trong bộ nhớ'); return; }
   if(!confirm(`Xóa "${S.bookTitle}" khỏi bộ nhớ?`)){ return; }
-  clearSavedBook();
   if(S.bookTitle) localStorage.removeItem('novreader_pos_' + S.bookTitle);
   S.chapters = []; S.bookTitle = ''; S.currentChapter = 0;
   stopTts();

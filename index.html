@@ -162,6 +162,13 @@ body.dark-theme{
 .drop-icon{font-size:30px;margin-bottom:6px}
 .drop-zone p{font-size:13px;color:var(--ink2);margin-bottom:0}
 .drop-zone small{font-size:11px;color:var(--ink3)}
+.meta-section{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.meta-input,.meta-textarea{width:100%;border:.5px solid var(--paper3);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif}
+.meta-input:focus,.meta-textarea:focus{outline:none;border-color:var(--gold)}
+.meta-textarea{min-height:90px;resize:vertical;line-height:1.5}
+.meta-hint{font-size:11px;color:var(--ink3)}
+.meta-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-small{padding:7px 10px;font-size:12px;min-width:auto;flex:1}
 .sep-section{margin-top:14px}
 .sep-label{font-size:12px;color:var(--ink2);margin-bottom:6px;font-weight:500}
 .sep-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
@@ -281,6 +288,13 @@ body.dark-theme{
         <button class="btn-ghost" style="flex:1;min-width:0;padding:8px;font-size:13px" onclick="if(S.currentChapter<S.chapters.length-1){loadChapter(S.currentChapter+1);closeMobileSidebar()}">
           Sau &#8594;
         </button>
+      </div>
+      <div class="sp-section">
+        <div class="sp-label">Thông tin truyện</div>
+        <div class="meta-actions">
+          <button class="btn-ghost btn-small" onclick="editBookTitle()">Đổi tên truyện</button>
+          <button class="btn-ghost btn-small" onclick="editBookIntro()">Sửa trang giới thiệu</button>
+        </div>
       </div>
     </div>
 
@@ -461,6 +475,21 @@ body.dark-theme{
       <small>Định dạng: .txt | Mã hóa: UTF-8</small>
     </div>
     <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFile(event)">
+    <div class="meta-section">
+      <div>
+        <div class="sep-label">Tiêu đề truyện</div>
+        <input type="text" id="bookTitleInput" class="meta-input" placeholder="Nhập tiêu đề truyện">
+      </div>
+      <div>
+        <div class="sep-label">Trang giới thiệu</div>
+        <input type="text" id="introTitleInput" class="meta-input" value="Giới thiệu" placeholder="Tiêu đề trang giới thiệu">
+      </div>
+      <div>
+        <div class="sep-label">Nội dung giới thiệu (tuỳ chọn)</div>
+        <textarea id="introContentInput" class="meta-textarea" placeholder="Nhập lời giới thiệu, lời tựa hoặc ghi chú đầu truyện..."></textarea>
+        <div class="meta-hint">Nội dung này sẽ được gộp vào trang giới thiệu thay cho “Chương 0”.</div>
+      </div>
+    </div>
     <div class="sep-section">
       <div class="sep-label">Định dạng phân tách chương</div>
       <div class="sep-tags">
@@ -499,6 +528,7 @@ const S = {
   globalDark: localStorage.getItem('globalDark') === 'true',
   bookTitle: '',
   sepMode: 'auto', pendingText: '',
+  pendingName: '', pendingIntroTitle: 'Giới thiệu', pendingIntroContent: '',
   font: 'Lora', fontSize: 17, lineH: 1.9, width: 680,
   bgColor: '#faf7f2', textColor: '#1a1612',
   focusMode: false,
@@ -566,6 +596,38 @@ async function deleteBook(name){
   } catch(e){ console.warn('IndexedDB delete failed', e); }
 }
 
+function isIntroChapter(ch){
+  if(!ch) return false;
+  if(ch.isIntro) return true;
+  const title = (ch.title || '').trim().toLowerCase();
+  return /^ch[uư][oơ]ng\s*0$/.test(title) || title === 'giới thiệu' || title === 'gioi thieu';
+}
+function normalizeBookChapters(chapters){
+  if(!Array.isArray(chapters)) return [];
+  return chapters.map((ch, idx) => {
+    const clone = {...ch};
+    if((idx === 0 && isIntroChapter(clone)) || /^ch[uư][oơ]ng\s*0$/i.test((clone.title || '').trim())){
+      clone.title = 'Giới thiệu';
+      clone.isIntro = true;
+      if(clone.subtitle && /gi[ơo]i thiệu|lời tựa/i.test(clone.subtitle)) clone.subtitle = '';
+    }
+    return clone;
+  });
+}
+function getIntroChapterIndex(chapters = S.chapters){
+  return chapters.findIndex(ch => isIntroChapter(ch));
+}
+function getReadingChapterCount(chapters = S.chapters){
+  return chapters.filter(ch => !isIntroChapter(ch)).length;
+}
+function formatBookChapterInfo(chapters = S.chapters){
+  const chapterCount = getReadingChapterCount(chapters);
+  const hasIntro = getIntroChapterIndex(chapters) !== -1;
+  if(chapterCount <= 0 && hasIntro) return 'Trang giới thiệu';
+  if(hasIntro) return `${chapterCount} chương + giới thiệu`;
+  return `${chapterCount} chương`;
+}
+
 // ===================== LIBRARY UI =====================
 async function renderLibrary(){
   const grid = document.getElementById('libraryGrid');
@@ -576,15 +638,18 @@ async function renderLibrary(){
     return;
   }
   grid.innerHTML = books.map(b => {
+    const bookChapters = normalizeBookChapters(b.chapters || []);
+    const maxIndex = Math.max(bookChapters.length - 1, 0);
     let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + b.name) || '0');
-    let pct = Math.round(((savedIdx+1)/b.chapters.length)*100);
+    savedIdx = Number.isNaN(savedIdx) ? 0 : Math.min(Math.max(savedIdx, 0), maxIndex);
+    const pct = bookChapters.length ? Math.round(((savedIdx+1)/bookChapters.length)*100) : 0;
     return `
       <div class="book-card" onclick="openBookFromLibrary('${b.name}')">
         <button class="book-card-del" onclick="event.stopPropagation(); removeBookFromLibrary('${b.name}')" title="Xóa sách">
           <i class="ti ti-trash"></i>
         </button>
         <div class="book-card-title">${b.name}</div>
-        <div class="book-card-info">${b.chapters.length} chương &bull; Đang đọc ${pct}%</div>
+        <div class="book-card-info">${formatBookChapterInfo(bookChapters)} &bull; Đang đọc ${pct}%</div>
       </div>
     `;
   }).join('');
@@ -593,12 +658,12 @@ async function renderLibrary(){
 async function openBookFromLibrary(name){
   const saved = await loadBook(name);
   if(saved && saved.chapters && saved.chapters.length){
-    S.chapters = saved.chapters;
+    S.chapters = normalizeBookChapters(saved.chapters);
     S.bookTitle = saved.name;
     let savedIdx = parseInt(localStorage.getItem('novreader_pos_' + saved.name) || '0');
-    S.currentChapter = savedIdx < saved.chapters.length ? savedIdx : 0;
+    S.currentChapter = savedIdx < S.chapters.length ? savedIdx : 0;
     document.getElementById('bookTitle').textContent = saved.name;
-    document.getElementById('bookInfo').textContent = `${saved.chapters.length} chương`;
+    document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
     renderChapterList();
     S.readLimitExpired = false;
     S.readLimitDeadline = null;
@@ -607,7 +672,7 @@ async function openBookFromLibrary(name){
     showToast(`Đã mở “${saved.name}”`);
     
     // Update last accessed
-    saveBook(saved.name, saved.chapters);
+    saveBook(saved.name, S.chapters);
   }
 }
 
@@ -798,7 +863,7 @@ function renderChapterList(){
     return;
   }
   sel.disabled = false;
-  sel.innerHTML = S.chapters.map((ch,i) => `<option value="${i}">${ch.title}</option>`).join('');
+  sel.innerHTML = S.chapters.map((ch,i) => `<option value="${i}">${isIntroChapter(ch) ? '📖 Giới thiệu' : ch.title}</option>`).join('');
   sel.value = S.currentChapter;
 }
 
@@ -811,6 +876,7 @@ function loadChapter(idx){
   S.currentChapter = idx;
   if(S.bookTitle) localStorage.setItem('novreader_pos_' + S.bookTitle, idx);
   const ch = S.chapters[idx];
+  if(!ch) return;
   const pct = Math.round(((idx+1)/S.chapters.length)*100);
   document.getElementById('progressFill').style.width = pct+'%';
   document.getElementById('progressLabel').textContent = pct+'% đã đọc';
@@ -1227,10 +1293,18 @@ function toggleGlobalDark(){
 // ===================== UPLOAD =====================
 function openUpload(){
   S.pendingText = ''; S.pendingName = '';
+  S.pendingIntroTitle = 'Giới thiệu';
+  S.pendingIntroContent = '';
   const fileInput = document.getElementById('fileInput');
   if(fileInput) fileInput.value = '';
   const dropP = document.querySelector('.drop-zone p');
   if(dropP) dropP.textContent = 'Kéo thả file hoặc bấm để chọn';
+  const titleInput = document.getElementById('bookTitleInput');
+  if(titleInput) titleInput.value = '';
+  const introTitleInput = document.getElementById('introTitleInput');
+  if(introTitleInput) introTitleInput.value = 'Giới thiệu';
+  const introContentInput = document.getElementById('introContentInput');
+  if(introContentInput) introContentInput.value = '';
   const parseBtn = document.getElementById('parseBtn');
   if(parseBtn) { parseBtn.textContent = 'Xử lý & Đọc'; parseBtn.disabled = true; }
   document.getElementById('uploadModal').classList.add('open');
@@ -1364,7 +1438,13 @@ function triggerParse(){
     showToast('Vui lòng chọn file .txt trước!');
     return;
   }
-  doParse(S.pendingText, S.pendingName||'Sách mới');
+  const titleInput = document.getElementById('bookTitleInput');
+  const introTitleInput = document.getElementById('introTitleInput');
+  const introContentInput = document.getElementById('introContentInput');
+  const bookTitle = (titleInput?.value || S.pendingName || 'Sách mới').trim();
+  const introTitle = (introTitleInput?.value || 'Giới thiệu').trim();
+  const introContent = (introContentInput?.value || '').trim();
+  doParse(S.pendingText, bookTitle || 'Sách mới', introTitle || 'Giới thiệu', introContent);
 }
 
 let pendingReader = null;
@@ -1374,6 +1454,8 @@ function parseFile(file){
     return;
   }
   S.pendingName = file.name.replace(/\.txt$/i,'');
+  const titleInput = document.getElementById('bookTitleInput');
+  if(titleInput && !titleInput.value.trim()) titleInput.value = S.pendingName;
   S.pendingText = ''; // clear while loading
   const parseBtn = document.getElementById('parseBtn');
   if(parseBtn){ parseBtn.textContent = 'Đang đọc file...'; parseBtn.disabled = true; }
@@ -1392,7 +1474,7 @@ function parseFile(file){
   r.readAsText(file,'utf-8');
 }
 
-function doParse(text, name){
+function doParse(text, name, manualIntroTitle = 'Giới thiệu', manualIntroContent = ''){
   // Auto-detect chỉ khi người dùng chọn "chapter" (default cũ) và chưa chọn gì
   // Khi đã là 'auto' thì dùng luôn pattern auto (match cả hai format)
   if (S.sepMode !== 'auto' && S.sepMode !== 'custom' && S.sepMode !== 'separator') {
@@ -1447,10 +1529,10 @@ function doParse(text, name){
 
   // Nếu có nội dung xuất hiện trước chương đầu tiên (lời tựa, giới thiệu, lời nói đầu...)
   // → gom vào "Chương 0" để không bị bỏ sót, thay vì xóa mất.
-  if(!isSeparator && introBuf.length){
-    const introContent = introBuf.join('\n\n').trim();
-    if(introContent.length > 10){
-      chapters.unshift({ title: 'Chương 0', subtitle: 'Giới thiệu / Lời tựa', content: introContent });
+  if(!isSeparator){
+    const mergedIntro = [introBuf.join('\n\n').trim(), manualIntroContent.trim()].filter(Boolean).join('\n\n');
+    if(mergedIntro.length > 10){
+      chapters.unshift({ title: manualIntroTitle || 'Giới thiệu', subtitle: '', content: mergedIntro, isIntro: true });
     }
   }
 
@@ -1461,22 +1543,83 @@ function doParse(text, name){
     validChapters.push({title:name, subtitle:'Toàn bộ nội dung', content:paras.join('\n\n')});
   }
 
-  S.chapters = validChapters;
+  S.chapters = normalizeBookChapters(validChapters);
   S.bookTitle = name;
   let savedIdx = localStorage.getItem('novreader_pos_' + name);
   let startChap = savedIdx ? parseInt(savedIdx) : 0;
-  S.currentChapter = startChap < validChapters.length ? startChap : 0;
+  S.currentChapter = startChap < S.chapters.length ? startChap : 0;
   
   document.getElementById('bookTitle').textContent = name;
-  document.getElementById('bookInfo').textContent = `${validChapters.length} chương`;
+  document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
   renderChapterList();
   S.readLimitExpired = false;
   S.readLimitDeadline = null;
   stopReadingLimitTimer();
   loadChapter(S.currentChapter);
-  saveBook(name, validChapters); // persist to IndexedDB
+  saveBook(name, S.chapters); // persist to IndexedDB
+  renderLibrary();
   closeUpload();
-  showToast(`Đã tải "${name}" — ${validChapters.length} chương`);
+  showToast(`Đã tải "${name}" — ${formatBookChapterInfo(S.chapters)}`);
+}
+
+async function editBookTitle(){
+  if(!S.bookTitle || !S.chapters.length){ showToast('Chưa có truyện nào để chỉnh sửa'); return; }
+  const oldTitle = S.bookTitle;
+  const nextTitle = prompt('Nhập tiêu đề truyện mới:', oldTitle);
+  if(nextTitle === null) return;
+  const newTitle = nextTitle.trim();
+  if(!newTitle){ showToast('Tiêu đề không được để trống'); return; }
+  if(newTitle === oldTitle) return;
+  const existing = await loadBook(newTitle);
+  if(existing){ showToast('Tiêu đề đã tồn tại trong thư viện'); return; }
+  const oldPos = localStorage.getItem('novreader_pos_' + oldTitle);
+  const scrollValues = S.chapters.map((_, i) => localStorage.getItem(`novreader_scroll_${oldTitle}_${i}`));
+  await saveBook(newTitle, S.chapters);
+  await deleteBook(oldTitle);
+  if(oldPos !== null) localStorage.setItem('novreader_pos_' + newTitle, oldPos);
+  scrollValues.forEach((v, i) => {
+    localStorage.removeItem(`novreader_scroll_${oldTitle}_${i}`);
+    if(v !== null) localStorage.setItem(`novreader_scroll_${newTitle}_${i}`, v);
+  });
+  S.bookTitle = newTitle;
+  document.getElementById('bookTitle').textContent = newTitle;
+  renderLibrary();
+  showToast('Đã cập nhật tiêu đề truyện');
+}
+async function editBookIntro(){
+  if(!S.bookTitle || !S.chapters.length){ showToast('Chưa có truyện nào để chỉnh sửa'); return; }
+  const introIdx = getIntroChapterIndex();
+  const currentIntro = introIdx >= 0 ? S.chapters[introIdx] : { title: 'Giới thiệu', content: '' };
+  const introTitle = prompt('Tiêu đề trang giới thiệu:', currentIntro.title || 'Giới thiệu');
+  if(introTitle === null) return;
+  const introContent = prompt('Nội dung trang giới thiệu:', currentIntro.content || '');
+  if(introContent === null) return;
+  const title = introTitle.trim() || 'Giới thiệu';
+  const content = introContent.trim();
+  const currentChapterRef = S.chapters[S.currentChapter];
+  if(content){
+    if(introIdx >= 0){
+      S.chapters[introIdx] = { ...S.chapters[introIdx], title, subtitle: '', content, isIntro: true };
+    } else {
+      S.chapters.unshift({ title, subtitle: '', content, isIntro: true });
+    }
+  } else if(introIdx >= 0){
+    S.chapters.splice(introIdx, 1);
+  }
+  if(!S.chapters.length){
+    showLibrary();
+    showToast('Đã xóa trang giới thiệu');
+    return;
+  }
+  const movedIdx = S.chapters.indexOf(currentChapterRef);
+  S.currentChapter = movedIdx >= 0 ? movedIdx : 0;
+  S.chapters = normalizeBookChapters(S.chapters);
+  document.getElementById('bookInfo').textContent = formatBookChapterInfo(S.chapters);
+  renderChapterList();
+  loadChapter(S.currentChapter);
+  await saveBook(S.bookTitle, S.chapters);
+  renderLibrary();
+  showToast('Đã cập nhật trang giới thiệu');
 }
 
 // ===================== MOBILE =====================

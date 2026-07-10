@@ -35,7 +35,7 @@ body.dark-theme{
   border-radius:50%;background:var(--gold);color:#1a1612;
   border:none;box-shadow:0 4px 16px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center;
-  font-size:20px;cursor:pointer;z-index:160;
+  font-size:20px;cursor:pointer;z-index:180;
   transition:transform .2s,background .2s;
   padding:0;overflow:visible;
 }
@@ -131,8 +131,25 @@ body.dark-theme{
 
 /* SIDEBAR TABS */
 .sidebar-body{display:flex;flex:1;min-height:0;overflow:hidden}
-.sb-tabs{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;width:56px;padding:12px 6px;border-right:.5px solid var(--paper3);background:var(--paper2);flex-shrink:0;transform-origin:bottom center;transform:scaleY(.12);opacity:.2;transition:transform .28s ease,opacity .28s ease}
-.sidebar.mobile-open .sb-tabs{transform:scaleY(1);opacity:1}
+
+/* Separated Tab Styles for Desktop & Mobile */
+.desktop-only-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 56px;
+  padding: 16px 6px;
+  border-right: .5px solid var(--paper3);
+  background: var(--paper2);
+  flex-shrink: 0;
+}
+
+.mobile-only-tabs {
+  display: none;
+}
+
 .sb-tab{width:40px;height:40px;font-size:11px;color:var(--ink3);background:none;border:1px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;border-radius:12px;transition:all .15s}
 .sb-tab i{font-size:18px}
 .sb-tab span{display:none}
@@ -235,33 +252,71 @@ body.dark-theme{
   .reader-content{padding:20px 16px 120px}
   .floating-menu-btn{bottom:calc(20px + env(safe-area-inset-bottom))}
   
-  /* Tách thanh tab ra, đặt nó nằm ngay trên nút Floating */
-  .sb-tabs {
-    position: fixed;
-    bottom: 85px; 
-    left: 20px;
-    z-index: 160;
-    background: var(--paper);
-    border: 1px solid var(--paper3);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.2);
-    transform-origin: bottom center;
-    transform: translateY(20px) scale(0.8);
-    opacity: 0;
-    pointer-events: none;
-    transition: all .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* Hiding desktop menu tabs layout completely on mobile sidebar */
+  .desktop-only-tabs {
+    display: none !important;
   }
   
-  .sidebar.mobile-open .sb-tabs,
-  body:has(.sidebar.mobile-open) .sb-tabs {
-    transform: translateY(0) scale(1);
+  /* Custom standalone mobile tabs positioned above the floating menu button */
+  .mobile-only-tabs {
+    display: flex !important;
+    position: fixed;
+    bottom: 84px; /* Perfectly aligned above the 54px floating button (20px bottom + 54px + 10px spacing) */
+    left: 20px;
+    width: 54px;
+    z-index: 170; /* Above sidebar background overlay for seamless clicking */
+    background: var(--paper);
+    border: 1px solid var(--paper3);
+    border-radius: 27px; /* rounded pill */
+    box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    
+    /* Animation starting from within the floating button (closed state) */
+    opacity: 0;
+    transform: translateY(70px) scale(0.1);
+    transform-origin: bottom center;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  }
+  
+  .mobile-only-tabs.mobile-open {
     opacity: 1;
+    transform: translateY(0) scale(1);
     pointer-events: auto;
   }
 
-  /* Thu gọn sidebar chính và đẩy sang phải */
+  /* Compact round tab button style on mobile */
+  .mobile-only-tabs .sb-tab {
+    width: 38px;
+    height: 38px;
+    font-size: 11px;
+    color: var(--ink3);
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all .15s;
+  }
+  
+  .mobile-only-tabs .sb-tab.active {
+    color: var(--accent);
+    background: var(--gold3);
+    border-color: var(--gold);
+  }
+  
+  .mobile-only-tabs .sb-tab i {
+    font-size: 18px;
+  }
+
+  /* Thu gọn sidebar chính và đẩy sang phải bên cạnh tabs */
   .sidebar {
-    left: 85px;
+    left: 85px; /* Sits perfectly beside the tabs container */
     width: calc(100% - 105px);
     transform-origin: bottom left;
     transform: translateY(-50%) scale(0.9);
@@ -281,6 +336,7 @@ body.dark-theme{
 <div class="top-progress-bar" id="topProgressBar"></div>
 
 <div class="main">
+  <!-- Floating Menu Trigger Action -->
   <button class="floating-menu-btn" id="floatingBtn" onclick="toggleMobileSidebar()" aria-label="Menu">
     <div class="fmb-inner">
       <svg class="fmb-ring" viewBox="0 0 54 54" width="54" height="54">
@@ -293,6 +349,19 @@ body.dark-theme{
     </div>
     <span class="fmb-pct" id="fmbPctLabel">0%</span>
   </button>
+
+  <!-- Mobile Floating Tabs (detached from sidebar for clean animation) -->
+  <div class="sb-tabs mobile-only-tabs" id="mobileSbTabs">
+    <button class="sb-tab active" onclick="switchTab('chap',this)" id="mTabChap" title="Chương">
+      <i class="ti ti-list"></i>
+    </button>
+    <button class="sb-tab" onclick="switchTab('read',this)" id="mTabRead" title="Đọc">
+      <i class="ti ti-text-size"></i>
+    </button>
+    <button class="sb-tab" onclick="switchTab('tts',this)" id="mTabTts" title="TTS">
+      <i class="ti ti-volume"></i>
+    </button>
+  </div>
 
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
@@ -310,7 +379,8 @@ body.dark-theme{
     </div>
 
     <div class="sidebar-body">
-      <div class="sb-tabs">
+      <!-- Desktop Only Sidebar Left Tab strip -->
+      <div class="sb-tabs desktop-only-tabs">
         <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap" title="Chương">
           <i class="ti ti-list"></i><span>Chương</span>
         </button>
@@ -388,7 +458,7 @@ body.dark-theme{
           <div class="swatch" data-bg="#f0e6d0" data-fg="#2a1a08" style="background:#f0e6d0" title="Sepia" onclick="setBg('#f0e6d0','#2a1a08',this)"></div>
           <div class="swatch" data-bg="#1a1a2e" data-fg="#d4cfc8" style="background:#1a1a2e" title="Tối xanh" onclick="setBg('#1a1a2e','#d4cfc8',this)"></div>
           <div class="swatch" data-bg="#2a2010" data-fg="#e8d4a8" style="background:#2a2010" title="Nâu" onclick="setBg('#2a2010','#e8d4a8',this)"></div>
-          <div class="swatch" data-bg="#0d1117" data-fg="#c9d1d9" style="background:#0d1117;border-color:#555" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
+          <div class="swatch" data-bg="#0d1117" data-fg="#c9d1d9" style="background:#0d1117" title="Dev dark" onclick="setBg('#0d1117','#c9d1d9',this)"></div>
         </div>
       </div>
       <div class="sp-section">
@@ -992,7 +1062,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     if(S.mobileOpen &&
        !document.getElementById('sidebar').contains(e.target) &&
-       !e.target.closest('.floating-menu-btn')){
+       !e.target.closest('.floating-menu-btn') &&
+       !document.getElementById('mobileSbTabs').contains(e.target)){
       closeMobileSidebar();
     }
   });
@@ -1218,6 +1289,7 @@ function pauseTts(){
   updatePlayBtn();
 }
 
+// Full Audio state termination
 function stopTts(){
   synth && synth.cancel();
   clearTimeout(ttsTimeout);
@@ -1381,10 +1453,19 @@ function updateReadingLimitMinutes(){
 
 // ===================== TABS =====================
 function switchTab(tabId, el){
+  // Deactivate all tab buttons first across desktop & mobile
   document.querySelectorAll('.sb-tab').forEach(t=>t.classList.remove('active'));
+  
+  // Set active class on BOTH corresponding desktop and mobile tab buttons for perfect state synchrony
+  const capId = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+  const desktopBtn = document.getElementById('tab' + capId);
+  const mobileBtn = document.getElementById('mTab' + capId);
+  if(desktopBtn) desktopBtn.classList.add('active');
+  if(mobileBtn) mobileBtn.classList.add('active');
+
+  // Activate chosen content pane
   document.querySelectorAll('.sb-pane').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  const pane = document.getElementById('pane' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+  const pane = document.getElementById('pane' + capId);
   if(pane) pane.classList.add('active');
 }
 
@@ -1397,6 +1478,7 @@ function setFont(f, el){
   localStorage.setItem('novreader_font', f);
 }
 
+// Set global reading interface color theme
 function setBg(bg, text, el){
   S.bgColor = bg; S.textColor = text;
   document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
@@ -1722,10 +1804,12 @@ function toggleMobileSidebar(){
 function openMobileSidebar(){
   S.mobileOpen = true;
   document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('mobileSbTabs').classList.add('mobile-open');
 }
 function closeMobileSidebar(){
   S.mobileOpen = false;
   document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('mobileSbTabs').classList.remove('mobile-open');
 }
 
 function confirmClearBook(){

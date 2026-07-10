@@ -79,9 +79,9 @@ body.dark-theme{
 .icon-btn.active{background:var(--gold3);color:var(--accent);border-color:var(--gold)}
 
 /* TTS MINI PLAYER */
-.tts-bar{position:fixed;bottom:20px;left:84px;height:54px;background:var(--paper);border:1px solid var(--paper3);border-radius:27px;padding:0 16px 0 20px;display:flex;flex-direction:row;align-items:center;gap:12px;width:auto;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:90;transition:all .3s}
+.tts-bar{position:fixed;bottom:20px;left:46px;right:16px;max-width:min(620px,calc(100vw - 62px));height:54px;background:var(--paper);border:1px solid var(--paper3);border-radius:27px;padding:0 16px 0 58px;display:flex;flex-direction:row;align-items:center;gap:12px;width:auto;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:120;transform-origin:left center;transform:scaleX(1);opacity:1;transition:transform .32s ease,opacity .25s ease,border-color .25s}
 .dark-theme .tts-bar{box-shadow:0 4px 20px rgba(0,0,0,0.4);border-color:#333}
-.tts-bar.hidden{display:none;opacity:0;pointer-events:none}
+.tts-bar.hidden{transform:scaleX(.15);opacity:0;pointer-events:none}
 .tts-title{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
 .tts-controls{display:flex;align-items:center;justify-content:center;gap:6px}
 .tts-btn{background:transparent;border:none;color:var(--ink2);cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;font-size:20px;line-height:1;transition:background .15s}
@@ -105,10 +105,14 @@ body.dark-theme{
 .chapter-body.dropcap p:first-child::first-letter{float:left;font-size:52px;line-height:.85;padding:4px 8px 0 0;color:var(--accent);font-weight:600}
 
 /* SIDEBAR TABS */
-.sb-tabs{display:flex;border-bottom:.5px solid var(--paper3);flex-shrink:0;background:var(--paper2)}
-.sb-tab{flex:1;padding:9px 4px;font-size:11px;color:var(--ink3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s}
-.sb-tab i{font-size:16px}
-.sb-tab.active{color:var(--gold);border-bottom:2px solid var(--gold)}
+.sidebar-body{display:flex;flex:1;min-height:0;overflow:hidden}
+.sb-tabs{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;width:56px;padding:12px 6px;border-right:.5px solid var(--paper3);background:var(--paper2);flex-shrink:0;transform-origin:bottom center;transform:scaleY(.12);opacity:.2;transition:transform .28s ease,opacity .28s ease}
+.sidebar.mobile-open .sb-tabs{transform:scaleY(1);opacity:1}
+.sb-tab{width:40px;height:40px;font-size:11px;color:var(--ink3);background:none;border:1px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;border-radius:12px;transition:all .15s}
+.sb-tab i{font-size:18px}
+.sb-tab span{display:none}
+.sb-tab.active{color:var(--accent);background:var(--gold3);border-color:var(--gold)}
+.sb-content{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
 .sb-pane{display:none;flex:1;overflow-y:auto;scrollbar-width:none}
 .sb-pane::-webkit-scrollbar{display:none}
 .sb-pane.active{display:block}
@@ -217,11 +221,13 @@ body.dark-theme{
 @media(max-width:640px){
   .reader-content{padding:20px 16px 120px}
   .floating-menu-btn{bottom:calc(20px + env(safe-area-inset-bottom))}
-  .tts-bar{left:84px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));width:auto;height:54px;border-radius:27px}
+  .tts-bar{left:46px;right:10px;bottom:calc(20px + env(safe-area-inset-bottom));max-width:calc(100vw - 56px);width:auto;height:54px;border-radius:27px}
   .tts-title{max-width:calc(100% - 140px)}
   .chapter-heading{font-size:18px}
   .chapter-body.dropcap p:first-child::first-letter{font-size:40px}
   .btn-ghost{padding:10px 14px;font-size:13px;min-width:90px}
+  .sb-tabs{width:52px;padding:10px 4px}
+  .sb-tab{width:36px;height:36px}
 }
 </style>
 </head>
@@ -260,21 +266,23 @@ body.dark-theme{
       <div class="progress-bar" style="margin-top:8px"><div class="progress-fill" id="progressFill"></div></div>
     </div>
 
-    <!-- TABS -->
-    <div class="sb-tabs">
-      <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap">
-        <i class="ti ti-list"></i><span>Chương</span>
-      </button>
-      <button class="sb-tab" onclick="switchTab('read',this)" id="tabRead">
-        <i class="ti ti-text-size"></i><span>Đọc</span>
-      </button>
-      <button class="sb-tab" onclick="switchTab('tts',this)" id="tabTts">
-        <i class="ti ti-volume"></i><span>TTS</span>
-      </button>
-    </div>
+    <div class="sidebar-body">
+      <!-- TABS -->
+      <div class="sb-tabs">
+        <button class="sb-tab active" onclick="switchTab('chap',this)" id="tabChap" title="Chương" aria-label="Chương">
+          <i class="ti ti-list"></i><span>Chương</span>
+        </button>
+        <button class="sb-tab" onclick="switchTab('read',this)" id="tabRead" title="Đọc" aria-label="Đọc">
+          <i class="ti ti-text-size"></i><span>Đọc</span>
+        </button>
+        <button class="sb-tab" onclick="switchTab('tts',this)" id="tabTts" title="TTS" aria-label="TTS">
+          <i class="ti ti-volume"></i><span>TTS</span>
+        </button>
+      </div>
 
-    <!-- TAB: CHAPTER -->
-    <div class="sb-pane active" id="paneChap">
+      <div class="sb-content">
+      <!-- TAB: CHAPTER -->
+      <div class="sb-pane active" id="paneChap">
       <div class="sp-section">
         <div class="sp-label" style="margin-bottom:8px">Chương hiện tại</div>
         <select id="chapterSelect" class="chapter-select" onchange="loadChapter(parseInt(this.value));closeMobileSidebar()">
@@ -301,9 +309,9 @@ body.dark-theme{
     <!-- TAB: READING SETTINGS -->
     <div class="sb-pane" id="paneRead">
       <div class="sp-section">
-        <div class="sp-label">Điều chỉnh văn bản</div>
+        <div class="sp-label">Văn bản</div>
         <div class="sp-row">
-          <label>Cỡ chữ (px)</label>
+          <label>Cỡ chữ</label>
           <input type="number" class="sp-num" min="13" max="72" value="17" id="fontSizeSlider" oninput="updateFont()">
         </div>
         <div class="sp-row">
@@ -311,15 +319,15 @@ body.dark-theme{
           <input type="number" class="sp-num" min="1.0" max="3.5" step="0.1" value="1.9" id="lineHSlider" oninput="updateFont()">
         </div>
         <div class="sp-row">
-          <label>Độ rộng (px)</label>
+          <label>Độ rộng</label>
           <input type="number" class="sp-num" min="300" max="1400" step="10" value="680" id="widthSlider" oninput="updateFont()">
         </div>
         <div class="sp-row">
-          <label>Lề trong (px)</label>
+          <label>Lề trong</label>
           <input type="number" class="sp-num" min="8" max="60" step="2" value="32" id="paddingSlider" oninput="updateFont()">
         </div>
         <div class="sp-row">
-          <label>Cách đoạn (em)</label>
+          <label>Cách đoạn</label>
           <input type="number" class="sp-num" min="0.5" max="3.0" step="0.1" value="1.2" id="paraSpaceSlider" oninput="updateFont()">
         </div>
       </div>
@@ -366,7 +374,7 @@ body.dark-theme{
           <input type="checkbox" class="toggle" id="readingLimitToggle" onchange="toggleReadingLimit()">
         </div>
         <div class="sp-row" style="margin-top:8px;margin-bottom:0">
-          <label for="readingLimitMinutes">Thời gian (phút)</label>
+          <label for="readingLimitMinutes">Thời gian</label>
           <input type="number" class="sp-num" min="1" max="720" value="30" id="readingLimitMinutes" oninput="updateReadingLimitMinutes()">
         </div>
       </div>
@@ -388,13 +396,13 @@ body.dark-theme{
       <div class="sp-section">
         <div class="sp-label">Tốc độ</div>
         <select class="sp-select" id="ttsRateSel" onchange="changeRate(this.value)">
-          <option value="0.5">0.5× (Rất chậm)</option>
-          <option value="0.75">0.75× (Chậm)</option>
-          <option value="1" selected>1× (Bình thường)</option>
-          <option value="1.25">1.25× (Nhanh)</option>
-          <option value="1.5">1.5× (Nhanh hơn)</option>
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
           <option value="1.75">1.75×</option>
-          <option value="2">2× (Rất nhanh)</option>
+          <option value="2">2×</option>
         </select>
       </div>
       <div class="sp-section">
@@ -412,17 +420,16 @@ body.dark-theme{
         <div id="voiceListEl" style="font-size:12px;color:var(--ink3)">Đang tải...</div>
       </div>
     </div>
-
-
-
-    <div class="sidebar-footer">
-      <div style="display:flex;gap:8px">
-        <button class="upload-btn" onclick="showLibrary()" style="flex:1;background:var(--paper3);color:var(--ink2)">
-          <i class="ti ti-books"></i> Thư viện
-        </button>
-        <button class="upload-btn" onclick="confirmClearBook()" title="Xóa sách hiện tại" style="background:var(--paper3);color:var(--ink2);flex:0 0 auto;width:auto;padding:8px 12px">
-          <i class="ti ti-trash"></i>
-        </button>
+      <div class="sidebar-footer">
+        <div style="display:flex;gap:8px">
+          <button class="upload-btn" onclick="showLibrary()" style="flex:1;background:var(--paper3);color:var(--ink2)">
+            <i class="ti ti-books"></i> Thư viện
+          </button>
+          <button class="upload-btn" onclick="confirmClearBook()" title="Xóa sách hiện tại" style="background:var(--paper3);color:var(--ink2);flex:0 0 auto;width:auto;padding:8px 12px">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -536,7 +543,6 @@ const S = {
   ttsVoice: null, ttsRate: 1, ttsVol: 1, ttsPitch: 1,
   ttsWords: [], ttsCursor: 0, ttsUtterance: null,
   mobileOpen: false,
-  autoNextPending: false,
   restoringScroll: false,
   readLimitEnabled: false,
   readLimitMinutes: 30,
@@ -727,7 +733,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     let scrollRAF = null;
     let saveScrollTimeout = null;
 
-    rc.addEventListener('scroll', (event) => {
+    rc.addEventListener('scroll', () => {
       // Gộp các lần scroll liên tiếp vào 1 khung hình (rAF) để tránh layout thrashing
       if(scrollRAF) return;
       scrollRAF = requestAnimationFrame(() => {
@@ -753,26 +759,6 @@ window.addEventListener('DOMContentLoaded', async () => {
           topBar.style.width = (pct * 100) + '%';
         }
 
-        const isUserScroll = event.isTrusted === true;
-        if(
-          isUserScroll &&
-          !S.restoringScroll &&
-          !S.autoNextPending &&
-          !isReadingLimitLocked() &&
-          scrollH > 0 &&
-          pct >= 0.995 &&
-          S.currentChapter < S.chapters.length - 1
-        ){
-          const chapterBeforeJump = S.currentChapter;
-          S.autoNextPending = true;
-          setTimeout(() => {
-            if(S.currentChapter === chapterBeforeJump && !isReadingLimitLocked()){
-              loadChapter(chapterBeforeJump + 1);
-              showToast('Đã tự chuyển sang chương tiếp theo');
-            }
-            S.autoNextPending = false;
-          }, 180);
-        }
       });
 
       // Lưu vị trí đọc vào localStorage — debounce 400ms để tránh ghi liên tục
@@ -783,6 +769,88 @@ window.addEventListener('DOMContentLoaded', async () => {
           localStorage.setItem(`novreader_scroll_${S.bookTitle}_${S.currentChapter}`, rc.scrollTop);
         }, 400);
       }
+    }, { passive: true });
+
+    let edgePullLock = false;
+    let touchStartY = null;
+    const edgePullState = { top: 0, bottom: 0 };
+    const resetEdgePull = () => {
+      edgePullState.top = 0;
+      edgePullState.bottom = 0;
+    };
+    const triggerEdgeChapter = direction => {
+      if(edgePullLock || isReadingLimitLocked() || !S.chapters.length) return;
+      const canGoPrev = direction === 'prev' && S.currentChapter > 0;
+      const canGoNext = direction === 'next' && S.currentChapter < S.chapters.length - 1;
+      if(!canGoPrev && !canGoNext) return;
+      edgePullLock = true;
+      if(canGoPrev){
+        loadChapter(S.currentChapter - 1);
+        showToast('Đã chuyển về chương trước');
+      } else if(canGoNext){
+        loadChapter(S.currentChapter + 1);
+        showToast('Đã chuyển sang chương tiếp theo');
+      }
+      setTimeout(() => { edgePullLock = false; }, 420);
+    };
+    const edgeThreshold = 85;
+    rc.addEventListener('wheel', e => {
+      if(!e.isTrusted || S.restoringScroll) return;
+      const maxScroll = rc.scrollHeight - rc.clientHeight;
+      const atTop = rc.scrollTop <= 0;
+      const atBottom = maxScroll > 0 && rc.scrollTop >= maxScroll - 1;
+      if(atBottom && e.deltaY > 0){
+        edgePullState.bottom += e.deltaY;
+        if(edgePullState.bottom >= edgeThreshold){
+          triggerEdgeChapter('next');
+          resetEdgePull();
+        }
+      } else if(atTop && e.deltaY < 0){
+        edgePullState.top += Math.abs(e.deltaY);
+        if(edgePullState.top >= edgeThreshold){
+          triggerEdgeChapter('prev');
+          resetEdgePull();
+        }
+      } else {
+        resetEdgePull();
+      }
+    }, { passive: true });
+
+    rc.addEventListener('touchstart', e => {
+      touchStartY = e.touches[0]?.clientY ?? null;
+      resetEdgePull();
+    }, { passive: true });
+
+    rc.addEventListener('touchmove', e => {
+      if(touchStartY === null || S.restoringScroll) return;
+      const currentY = e.touches[0]?.clientY;
+      if(typeof currentY !== 'number') return;
+      const maxScroll = rc.scrollHeight - rc.clientHeight;
+      const atTop = rc.scrollTop <= 0;
+      const atBottom = maxScroll > 0 && rc.scrollTop >= maxScroll - 1;
+      const delta = touchStartY - currentY;
+      if(atBottom && delta > 0){
+        edgePullState.bottom = delta;
+        if(edgePullState.bottom >= edgeThreshold){
+          triggerEdgeChapter('next');
+          touchStartY = currentY;
+          resetEdgePull();
+        }
+      } else if(atTop && delta < 0){
+        edgePullState.top = Math.abs(delta);
+        if(edgePullState.top >= edgeThreshold){
+          triggerEdgeChapter('prev');
+          touchStartY = currentY;
+          resetEdgePull();
+        }
+      } else {
+        resetEdgePull();
+      }
+    }, { passive: true });
+
+    rc.addEventListener('touchend', () => {
+      touchStartY = null;
+      resetEdgePull();
     }, { passive: true });
   }
 

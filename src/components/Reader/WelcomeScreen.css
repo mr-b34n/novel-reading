@@ -1,0 +1,68 @@
+.welcome-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--bg-reader);
+  color: var(--text-reader);
+}
+
+.welcome-logo {
+  font-family: 'Lora', serif;
+  font-size: 42px;
+  font-weight: 600;
+  color: var(--gold2);
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.welcome-desc {
+  font-size: 15px;
+  color: var(--ink2);
+  margin-bottom: 40px;
+}
+
+.welcome-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 480px;
+  margin-bottom: 40px;
+}
+
+.wf-item {
+  background: var(--paper2);
+  padding: 16px;
+  border-radius: var(--rd-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--paper3);
+  transition: transform var(--transition-fast);
+}
+
+.wf-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+}
+
+.wf-item i {
+  font-size: 28px;
+  color: var(--gold2);
+}
+
+.wf-item span {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+@media (max-width: 500px) {
+  .welcome-features {
+    grid-template-columns: 1fr;
+  }
+}

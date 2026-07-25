@@ -1,0 +1,258 @@
+.trans-mode-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.trans-mode-group button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.dict-manager {
+  margin-top: 16px;
+  border-top: 1px dashed var(--paper3);
+  padding-top: 16px;
+}
+
+.dict-title {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vp-upload-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--paper2);
+  padding: 12px;
+  border-radius: var(--rd);
+  border: 1px solid var(--paper3);
+}
+
+.vp-type-select {
+  display: flex;
+  gap: 8px;
+}
+
+.vp-type-select label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--paper);
+  border: 1px solid var(--paper3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vp-type-select label.active {
+  background: var(--gold3);
+  border-color: var(--gold);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.import-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.import-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--paper3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.import-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  transition: width 0.15s ease;
+}
+
+.import-status-text {
+  font-size: 12px;
+  color: var(--ink2);
+  line-height: 1.4;
+}
+
+.import-status-text.success {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.dict-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.stat-card {
+  background: var(--paper);
+  border: 1px solid var(--paper3);
+  border-radius: 8px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-lbl {
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 2px;
+}
+
+.dict-clear-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-clear-store {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--paper3);
+  background: var(--paper);
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-store:hover {
+  background: #ffebee;
+  border-color: #d32f2f;
+  color: #d32f2f;
+}
+
+.dict-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: var(--paper2);
+  padding: 12px;
+  border-radius: var(--rd);
+}
+
+.dict-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1px solid var(--paper3);
+  border-radius: var(--rd);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+
+.dict-input:focus {
+  border-color: var(--gold);
+}
+
+.dict-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.dict-empty {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 16px 8px;
+  line-height: 1.4;
+}
+
+.dict-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--paper2);
+  border-radius: var(--rd);
+  border: 1px solid transparent;
+}
+
+.dict-item:hover {
+  border-color: var(--paper3);
+}
+
+.dict-item-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dict-zh {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dict-arrow {
+  color: var(--ink3);
+  font-size: 10px;
+}
+
+.dict-vi {
+  color: var(--gold2);
+  font-weight: 600;
+}
+
+.dict-scope-badge {
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--paper3);
+  color: var(--ink2);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.dict-del {
+  background: none;
+  border: none;
+  color: var(--ink3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.dict-del:hover {
+  color: #ff3b30;
+}

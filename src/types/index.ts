@@ -1,6 +1,7 @@
 export interface Book {
   name: string
   chapters: Chapter[]
+  intro?: string
   cover?: string
   isSangTacViet?: boolean
   enableTranslate?: boolean
@@ -28,6 +29,7 @@ export interface ReadSettings {
   dropcap: boolean
   highlightTts: boolean
   globalDark: boolean
+  swipeToChange: boolean
 }
 
 export interface TtsWord {

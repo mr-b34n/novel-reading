@@ -514,6 +514,24 @@
   gap: 12px;
 }
 
+.lib-dict-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--rd);
+  font-weight: 600;
+  border: 1px solid var(--paper3);
+  background: var(--paper2);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lib-upload-btn {
+  white-space: nowrap;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .lib-header {
@@ -521,6 +539,30 @@
   }
   .lib-header-inner {
     flex-wrap: wrap;
+    gap: 12px;
+  }
+  .lib-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .lib-search-box {
+    width: 100%;
+    flex: 1;
+    min-width: 120px;
+  }
+  .lib-search-box:focus-within {
+    width: 100%;
+  }
+  .lib-dict-btn,
+  .lib-upload-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hide-mobile {
+    display: none;
   }
   .lib-main {
     padding: 20px 16px 40px;
@@ -528,12 +570,6 @@
   .lib-grid {
     grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
     gap: 20px 14px;
-  }
-  .lib-search-box {
-    width: 100%;
-  }
-  .lib-search-box:focus-within {
-    width: 100%;
   }
   .lib-title {
     font-size: 19px;

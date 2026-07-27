@@ -14,6 +14,7 @@ const DEFAULTS: ReadSettings = {
   dropcap: true,
   highlightTts: true,
   globalDark: false,
+  swipeToChange: true,
 }
 
 interface SettingsStore {

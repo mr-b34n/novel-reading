@@ -29,7 +29,9 @@ function getCoverTheme(title: string) {
 interface PendingUpload {
   name: string
   chapters: Chapter[]
+  intro?: string
   enableTranslate: boolean
+  nameOption: 'edit' | 'translate' | 'none'
 }
 
 export default function LibraryView() {
@@ -71,8 +73,8 @@ export default function LibraryView() {
     reader.onload = async (event) => {
       try {
         const content = event.target?.result as string
-        const chapters = parseTxt(content)
-        if (!chapters || chapters.length === 0) {
+        const parsed = parseTxt(content)
+        if (!parsed.chapters || parsed.chapters.length === 0) {
           setErrorMsg('Không tìm thấy chương nào trong file. Vui lòng kiểm tra lại cấu trúc file .txt.')
           setLoading(false)
           return
@@ -85,8 +87,10 @@ export default function LibraryView() {
 
         setPendingUpload({
           name: defaultTitle,
-          chapters,
+          chapters: parsed.chapters,
+          intro: parsed.intro,
           enableTranslate: containsChinese, // default checked if Chinese detected
+          nameOption: 'edit'
         })
       } catch (err) {
         console.error(err)
@@ -104,11 +108,17 @@ export default function LibraryView() {
     try {
       let finalBookName = pendingUpload.name.trim()
       let finalChapters = pendingUpload.chapters
+      let finalIntro = pendingUpload.intro
 
       if (pendingUpload.enableTranslate) {
-        // Automatically translate book title and chapter titles
-        const translatedName = translator.translateText(finalBookName)
-        if (translatedName) finalBookName = translatedName
+        if (pendingUpload.nameOption === 'translate') {
+          const translatedName = translator.translateText(finalBookName)
+          if (translatedName) finalBookName = translatedName
+        }
+
+        if (finalIntro) {
+          finalIntro = translator.translateText(finalIntro)
+        }
 
         finalChapters = pendingUpload.chapters.map((ch) => ({
           ...ch,
@@ -119,6 +129,7 @@ export default function LibraryView() {
       const newBook: Book = {
         name: finalBookName,
         chapters: finalChapters,
+        intro: finalIntro,
         enableTranslate: pendingUpload.enableTranslate,
         lastAccessed: Date.now(),
       }
@@ -210,31 +221,20 @@ export default function LibraryView() {
             )}
 
             <button
-              className="btn-ghost"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                fontWeight: 600,
-                border: '1px solid var(--paper3)',
-                background: 'var(--paper2)',
-                color: 'var(--ink)',
-                cursor: 'pointer',
-              }}
+              className="btn-ghost lib-dict-btn"
               onClick={() => useUiStore.getState().setShowDictModal(true)}
               title="Quản lý & Nhập dữ liệu từ điển VietPhrase / Names"
             >
-              <i className="ti ti-book-download" /> Từ Điển (VP/Name)
+              <i className="ti ti-book-download" /> <span className="hide-mobile">Từ Điển</span>
             </button>
 
             <button
               className="btn-primary lib-upload-btn"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
+              title="Tải sách (.txt)"
             >
-              <i className="ti ti-upload" /> {loading ? 'Đang đọc file...' : 'Tải sách (.txt)'}
+              <i className="ti ti-upload" /> <span className="hide-mobile">{loading ? 'Đang đọc...' : 'Tải sách'}</span>
             </button>
             <input
               type="file"
@@ -339,6 +339,26 @@ export default function LibraryView() {
                   value={pendingUpload.name}
                   onChange={(e) => setPendingUpload({ ...pendingUpload, name: e.target.value })}
                 />
+                {pendingUpload.enableTranslate && (
+                  <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '13px', color: 'var(--ink2)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        checked={pendingUpload.nameOption === 'edit'}
+                        onChange={() => setPendingUpload({ ...pendingUpload, nameOption: 'edit' })}
+                      />
+                      Giữ nguyên
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        checked={pendingUpload.nameOption === 'translate'}
+                        onChange={() => setPendingUpload({ ...pendingUpload, nameOption: 'translate' })}
+                      />
+                      Tự động dịch
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div className="um-stats">

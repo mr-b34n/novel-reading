@@ -25,7 +25,9 @@ export default function WordEditModal({
 
   const [zh, setZh] = useState(token.zh)
   const [vi, setVi] = useState(token.vi)
-  const [scope, setScope] = useState<'chapter' | 'global'>('global')
+  const [vpMeaning, setVpMeaning] = useState(token.vi)
+  const [scope, setScope] = useState<'chapter' | 'global' | 'global_all'>('global')
+  const [isBlacklist, setIsBlacklist] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)
 
   // Re-calculate Hanviet whenever Chinese phrase changes
@@ -55,8 +57,24 @@ export default function WordEditModal({
     setCharStart(cStart)
     setCharEnd(cEnd)
     setZh(token.zh)
-    setVi(token.vi)
-  }, [token])
+
+    if (existing) {
+      setVi(existing.vi)
+      setVpMeaning(existing.vi)
+      setIsBlacklist(!!existing.isBlacklist)
+      if (existing.chapterIndex === 'global_all') {
+        setScope('global_all')
+      } else if (existing.chapterIndex === 'global') {
+        setScope('global')
+      } else {
+        setScope('chapter')
+      }
+    } else {
+      setVi(token.vi)
+      setVpMeaning(token.vi)
+      setIsBlacklist(false)
+    }
+  }, [token, existing])
 
   // Helper to update range when expanding / shrinking selection
   const updateRange = (newStart: number, newEnd: number) => {
@@ -70,6 +88,7 @@ export default function WordEditModal({
     const newHv = convertohanviets(newZh)
     const newVi = translator.translateText(newZh) || newHv
     setVi(newVi)
+    setVpMeaning(newVi)
   }
 
   const handleExpandLeft = () => {
@@ -104,7 +123,34 @@ export default function WordEditModal({
   // Capitalize first letter
   const handleCapitalizeFirst = () => {
     if (!vi) return
-    setVi(vi.charAt(0).toUpperCase() + vi.slice(1))
+    const trimmed = vi.trim()
+    if (!trimmed) return
+    const words = vi.split(/(\s+)/)
+    let firstFound = false
+    const result = words.map((w) => {
+      if (/^\s+$/.test(w) || !w) return w
+      if (!firstFound) {
+        firstFound = true
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+      }
+      return w.toLowerCase()
+    })
+    setVi(result.join(''))
+  }
+
+  // Lowercase the last word
+  const handleLowercaseLast = () => {
+    if (!vi) return
+    const words = vi.split(/(\s+)/)
+    for (let i = words.length - 1; i >= 0; i--) {
+      if (/\S/.test(words[i])) {
+        if (words[i] !== words[i].toLowerCase()) {
+          words[i] = words[i].toLowerCase()
+          break
+        }
+      }
+    }
+    setVi(words.join(''))
   }
 
   // Lowercase all
@@ -113,29 +159,42 @@ export default function WordEditModal({
     setVi(vi.toLowerCase())
   }
 
-  // Re-translate from current zh
-  const handleRetranslate = () => {
-    if (!zh) return
-    setVi(translator.translateText(zh))
+  // Convert directly to Hán Việt (e.g. "夏青珊" -> "Hạ Thanh San")
+  const getFormattedHanviet = (text: string) => {
+    const hvString = convertohanviets(text)
+    if (!hvString) return ''
+    const words = hvString.split(/\s+/).filter(Boolean)
+    return words
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ')
   }
 
-  // Convert directly to Hán Việt (e.g. "夏青珊" -> "Hạ Thanh San")
-  const handleUseHanviet = () => {
-    const hvString = convertohanviets(zh)
-    if (hvString) {
-      const words = hvString.split(/\s+/).filter(Boolean)
-      const cappedHv = words
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ')
-      setVi(cappedHv)
+  const formattedHv = useMemo(() => getFormattedHanviet(zh), [zh])
+
+  const handleToggleHanviet = () => {
+    if (vi === formattedHv) {
+      const fallbackVp = vpMeaning !== formattedHv ? vpMeaning : (translator.translateText(zh) || '')
+      setVi(fallbackVp !== formattedHv ? fallbackVp : vpMeaning)
+    } else {
+      setVpMeaning(vi)
+      setVi(formattedHv)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setVi(val)
+    if (val !== formattedHv) {
+      setVpMeaning(val)
     }
   }
 
   const handleSave = async () => {
-    if (!zh.trim() || !vi.trim()) return
+    if (!zh.trim()) return
+    if (!isBlacklist && !vi.trim()) return
 
-    const targetChapter = scope === 'chapter' ? chapterIndex : 'global'
-    await saveUserCustomName(bookTitle, targetChapter, zh.trim(), vi.trim())
+    const targetChapter = scope === 'chapter' ? chapterIndex : (scope === 'global_all' ? 'global_all' : 'global')
+    await saveUserCustomName(bookTitle, targetChapter, zh.trim(), vi.trim(), isBlacklist)
 
     setSavedSuccess(true)
     setTimeout(() => {
@@ -192,9 +251,9 @@ export default function WordEditModal({
 
                 {/* Context preview in raw Chinese */}
                 <div className="word-context-preview flex-1">
-                  <span className="ctx-dim">{prevContextZh}</span>
+                  <span className="ctx-dim prev" dir="rtl">{prevContextZh}</span>
                   <span className="ctx-active">{zh}</span>
-                  <span className="ctx-dim">{nextContextZh}</span>
+                  <span className="ctx-dim next">{nextContextZh}</span>
                 </div>
 
                 {/* Right controls */}
@@ -222,17 +281,28 @@ export default function WordEditModal({
             </div>
           )}
 
-          {/* Edit Field */}
+          {/* Edit Field with integrated Hanviet button */}
           <div className="word-box">
-            <span className="word-box-label">Nghĩa mới ({hanviet})</span>
-
-            <input
-              type="text"
-              className="word-box-input focus-highlight"
-              value={vi}
-              onChange={(e) => setVi(e.target.value)}
-              placeholder="Nhập nghĩa dịch mong muốn..."
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+              <input
+                type="text"
+                className="word-box-input focus-highlight"
+                style={{ paddingRight: '42px', width: '100%' }}
+                value={vi}
+                onChange={handleInputChange}
+                placeholder={isBlacklist ? "Blacklist - Sẽ bị bỏ qua khi dịch" : "Nhập nghĩa dịch mong muốn..."}
+                disabled={isBlacklist}
+              />
+              <button
+                type="button"
+                onClick={handleToggleHanviet}
+                disabled={isBlacklist}
+                className="btn-inside-input-hv"
+                title={vi === formattedHv ? "Click để chuyển về nghĩa Vietphrase" : `Click để chuyển sang Hán Việt (${hanviet})`}
+              >
+                <i className="ti ti-language" />
+              </button>
+            </div>
 
             {/* Alternative meanings from dictionaries */}
             {altMeanings.length > 0 && (
@@ -253,24 +323,15 @@ export default function WordEditModal({
               </div>
             )}
 
-            {/* Quick Capitalization, Hán Việt & Format Actions */}
+            {/* Quick Capitalization & Format Actions */}
             <div className="word-transform-actions">
               <button
                 type="button"
-                className="btn-transform primary"
+                className="btn-transform"
                 onClick={handleCapitalizeAll}
-                title="Viết hoa tất cả các từ trong cụm từ"
+                title="Viết hoa tất cả các từ"
               >
-                <i className="ti ti-letter-case-toggle" /> Viết hoa tất cả
-              </button>
-
-              <button
-                type="button"
-                className="btn-transform primary-hv"
-                onClick={handleUseHanviet}
-                title="Lấy âm Hán Việt (viết hoa dạng Tên)"
-              >
-                Lấy Hán Việt
+                Hoa toàn bộ
               </button>
 
               <button
@@ -285,19 +346,19 @@ export default function WordEditModal({
               <button
                 type="button"
                 className="btn-transform"
-                onClick={handleLowercase}
-                title="Chuyển thành chữ thường"
+                onClick={handleLowercaseLast}
+                title="Chuyển từ cuối cùng thành chữ thường"
               >
-                Chữ thường
+                Thường chữ cuối
               </button>
 
               <button
                 type="button"
                 className="btn-transform"
-                onClick={handleRetranslate}
-                title="Dịch lại theo từ điển"
+                onClick={handleLowercase}
+                title="Chuyển tất cả thành chữ thường"
               >
-                Dịch lại
+                Thường toàn bộ
               </button>
             </div>
           </div>
@@ -308,10 +369,18 @@ export default function WordEditModal({
             <div className="scope-options-minimal">
               <button
                 type="button"
+                className={`btn-scope ${scope === 'global_all' ? 'active' : ''}`}
+                onClick={() => setScope('global_all')}
+              >
+                Mọi truyện
+              </button>
+
+              <button
+                type="button"
                 className={`btn-scope ${scope === 'global' ? 'active' : ''}`}
                 onClick={() => setScope('global')}
               >
-                Toàn truyện
+                Truyện này
               </button>
 
               <button
@@ -322,6 +391,18 @@ export default function WordEditModal({
                 Chỉ chương này
               </button>
             </div>
+          </div>
+
+          <div className="word-box scope-box-minimal" style={{ marginTop: '8px', cursor: 'pointer' }} onClick={() => setIsBlacklist(!isBlacklist)}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink2)' }}>
+              <input
+                type="checkbox"
+                checked={isBlacklist}
+                onChange={(e) => setIsBlacklist(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              Đưa vào Blacklist (Bỏ qua khi dịch)
+            </label>
           </div>
 
           {savedSuccess && (

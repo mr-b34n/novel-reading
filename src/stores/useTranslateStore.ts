@@ -55,14 +55,15 @@ interface TranslateStore {
   importFile: (file: File, type: 'vietphrase' | 'names' | 'luatnhan' | 'pronouns') => Promise<void>
   clearStore: (type: 'vietphrase' | 'names' | 'custom' | 'luatnhan' | 'pronouns') => Promise<void>
 
-  loadChapterNames: (bookTitle: string, chapterIndex: number | 'global') => Promise<void>
+  loadChapterNames: (bookTitle: string, chapterIndex: number | 'global' | 'global_all') => Promise<void>
   saveUserCustomName: (
     bookTitle: string,
-    chapterIndex: number | 'global',
+    chapterIndex: number | 'global' | 'global_all',
     zh: string,
-    vi: string
+    vi: string,
+    isBlacklist?: boolean
   ) => Promise<void>
-  removeUserCustomName: (key: string, bookTitle: string, chapterIndex: number | 'global') => Promise<void>
+  removeUserCustomName: (key: string, bookTitle: string, chapterIndex: number | 'global' | 'global_all') => Promise<void>
 }
 
 let initDbPromise: Promise<void> | null = null
@@ -230,7 +231,7 @@ export const useTranslateStore = create<TranslateStore>()(
           })
       },
 
-      loadChapterNames: async (bookTitle: string, chapterIndex: number | 'global') => {
+      loadChapterNames: async (bookTitle: string, chapterIndex: number | 'global' | 'global_all') => {
         if (!bookTitle) return
         const customEntries = await getCustomNamesForChapter(bookTitle, chapterIndex)
         translator.setCustomNames(customEntries)
@@ -243,8 +244,10 @@ export const useTranslateStore = create<TranslateStore>()(
         }
       },
 
-      saveUserCustomName: async (bookTitle, chapterIndex, zh, vi) => {
-        if (!zh.trim() || !vi.trim() || !bookTitle) return
+      saveUserCustomName: async (bookTitle, chapterIndex, zh, vi, isBlacklist) => {
+        if (!zh.trim() || !bookTitle) return
+        // Allow empty vi if it's a blacklist
+        if (!isBlacklist && !vi.trim()) return
 
         const cleanZh = zh.trim()
         const cleanVi = vi.trim()
@@ -256,6 +259,7 @@ export const useTranslateStore = create<TranslateStore>()(
           chapterIndex,
           zh: cleanZh,
           vi: cleanVi,
+          isBlacklist,
           createdAt: Date.now(),
         }
 

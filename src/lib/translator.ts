@@ -48,6 +48,7 @@ class TranslatorEngine {
   private namesMap: Map<string, string> = new Map()
   private pronounsMap: Map<string, string> = new Map()
   private vpMap: Map<string, string> = new Map()
+  private blacklistSet: Set<string> = new Set()
   private luatNhanIndex: Map<string, CompiledLuatNhanRule[]> = new Map()
   private maxLen = 15
   private charMaxLen: Uint8Array = new Uint8Array(65536)
@@ -85,12 +86,15 @@ class TranslatorEngine {
   }
 
   /**
-   * Set custom user names (highest priority)
+   * Set custom user names and blacklist (highest priority)
    */
   public setCustomNames(entries: CustomNameEntry[]) {
     this.customMap.clear()
+    this.blacklistSet.clear()
     for (const e of entries) {
-      if (e.zh && e.vi) {
+      if (e.isBlacklist && e.zh) {
+        this.blacklistSet.add(e.zh)
+      } else if (e.zh && e.vi) {
         this.customMap.set(e.zh, e.vi)
       }
     }
@@ -140,7 +144,7 @@ class TranslatorEngine {
       const firstChar = zhPrefix.length > 0 ? zhPrefix[0] : '*'
       const escPrefix = zhPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       const escSuffix = zhSuffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const regexStr = '^' + escPrefix + '([^\\s\\n,.:;!?“”（）《》【】。！？]{1,50}?)' + escSuffix
+      const regexStr = '^' + escPrefix + '([^\\s\\n\\r\\t,.:;!?“”（）《》【】。！？，、～；：‘’""\'…—\\-·「」『』〈〉〔〕［］｛｝＜＞]{1,25}?)' + escSuffix
       let regex: RegExp
       try {
         regex = new RegExp(regexStr)
@@ -287,15 +291,141 @@ class TranslatorEngine {
   }
 
   /**
+   * Context-aware meaning disambiguation for words/particles whose correct Vietnamese
+   * meaning depends on surrounding context and cannot be resolved by a flat dictionary
+   * lookup alone. Adapted from the rule set found in qtOnline.js (meanstrategy), but
+   * restricted to in-place meaning corrections only — no token reordering.
+   *
+   * Returns the corrected Vietnamese meaning, or undefined if no rule applies (in which
+   * case normal dictionary lookup proceeds as usual).
+   */
+  private resolveContextualMeaning(
+    sub: string,
+    i: number,
+    len: number,
+    n: number,
+    text: string,
+    tokens: TranslatedToken[],
+    isSentenceStart: boolean,
+  ): string | undefined {
+    const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : undefined
+    const nextIdx = i + len
+    const nextChar = nextIdx < n ? text[nextIdx] : ''
+
+    switch (sub) {
+      // 得 as a resultative/degree-complement particle after a verb -> "được"
+      // (e.g. 做得好 = làm được tốt). Left untouched (falls through to dictionary)
+      // when it doesn't immediately follow a verb-like token.
+      case '得':
+        if (prevToken && (prevToken.source === 'vp' || prevToken.source === 'hanviet')) {
+          return 'được'
+        }
+        return undefined
+
+      // 不成 as a rhetorical-question tag ("...chẳng lẽ...hay sao?") only when the
+      // clause actually ends in a question mark shortly after.
+      case '不成': {
+        let j = nextIdx
+        let found = false
+        while (j < n && j < nextIdx + 15) {
+          const c = text[j]
+          if (c === '?' || c === '？') {
+            found = true
+            break
+          }
+          if (SENTENCE_BREAK_SET.has(c)) break
+          j++
+        }
+        return found ? 'hay sao' : undefined
+      }
+
+      // 越 immediately followed by a number/numeral -> "vượt" (exceed), as opposed to
+      // 越 used in the "越...越..." (the more...the more) construction.
+      case '越': {
+        const rest = text.substring(nextIdx, nextIdx + 20)
+        if (/^[\d]/.test(rest) || /^[零〇一二两三四五六七八九十百千万亿]/.test(rest)) {
+          return 'vượt'
+        }
+        return undefined
+      }
+
+      // 情 immediately after 事 (when tokenized separately, e.g. 事情 split across
+      // dictionary boundaries) should not repeat as a separate word.
+      case '情':
+        if (prevToken && prevToken.zh.endsWith('事')) {
+          return ''
+        }
+        return undefined
+
+      // 对 as a standalone interjection ("Đúng!") only when it closes a clause.
+      case '对':
+        if (PUNCT_SET.has(nextChar) && SENTENCE_BREAK_SET.has(nextChar)) {
+          return 'đúng'
+        }
+        return undefined
+
+      // 总是 at the very start of a sentence/paragraph is commonly used as a narrative
+      // transition ("Nói chung...") rather than the literal "luôn luôn" (always).
+      case '总是':
+        return isSentenceStart ? 'nói chung' : 'luôn luôn'
+
+      // 下落 after 的 (的下落 = "tung tích của") -> "tung tích" (whereabouts).
+      case '下落':
+        if (prevToken && prevToken.zh.endsWith('的')) {
+          return 'tung tích'
+        }
+        return undefined
+
+      // 很/佷 directly after 的 (an intensifier-suffix pattern "...的很") -> "vô cùng".
+      // Elsewhere, 很/佷 is left to the normal dictionary (usually "rất").
+      case '很':
+      case '佷':
+        if (prevToken && prevToken.zh === '的') {
+          return 'vô cùng'
+        }
+        return undefined
+
+      // Idioms/particles that are frequently missing or mistranslated by flat
+      // dictionaries, with a stable meaning regardless of surrounding context.
+      case '却是':
+        return 'lại là'
+      case '原来':
+        return 'thì ra'
+      case '谈何容易':
+        return 'nói thì dễ'
+      case '谈何':
+        return 'nói chi là'
+      case '所谓':
+        return 'cái gọi là'
+      case '奈何':
+        return 'làm gì'
+      case '应着':
+        return 'đáp lời'
+      case '能为':
+        return 'năng lực'
+      case '惯了':
+        return 'quen rồi'
+      case '也对':
+        return 'cũng đúng'
+      case '都对':
+        return 'đều đúng'
+      case '才是对':
+        return 'mới là đúng'
+
+      default:
+        return undefined
+    }
+  }
+
+  /**
    * Translate a Chinese string into structured tokens (longest-match greedy algorithm)
    */
-  public translateToTokens(text: string): TranslatedToken[] {
+  public translateToTokens(text: string, initialIsSentenceStart: boolean = true): TranslatedToken[] {
     const tokens: TranslatedToken[] = []
     let i = 0
     const n = text.length
 
-    let isSentenceStart = true
-
+    let isSentenceStart = initialIsSentenceStart
     while (i < n) {
       const char = text[i]
 
@@ -337,7 +467,21 @@ class TranslatorEngine {
               const m = rule.regex.exec(testSub)
               if (m) {
                 const fullMatchZh = m[0]
+                if (this.blacklistSet.has(fullMatchZh)) continue
+
                 const innerZh = m[1]
+                if (!innerZh || !innerZh.trim()) continue
+
+                // Avoid matching across clauses or prepositions/conjunctions in grammatical {0}
+                if (rule.zhPrefix.length === 0) {
+                  if (/[在自从往向于被把让离对至跟同和与但而却又就都也才还或]/.test(innerZh)) {
+                    continue
+                  }
+                  if (/甚至|因为|所以|如果|虽然|已经|曾经|还是|而且|并且|其实|正在|只是/.test(innerZh)) {
+                    continue
+                  }
+                }
+
                 const viPre = rule.viPrefix.trim()
                 const viSuf = rule.viSuffix.trim()
 
@@ -347,20 +491,24 @@ class TranslatorEngine {
                     pVi = this.capitalize(pVi)
                     isSentenceStart = false
                   }
-                  const zhP = rule.zhPrefix || rule.zhSuffix || rule.rawZh
+                  const isPreFromZhPrefix = rule.zhPrefix.length > 0
+                  const zhP = isPreFromZhPrefix ? rule.zhPrefix : rule.zhSuffix || rule.rawZh
+                  const startP = isPreFromZhPrefix ? i : i + innerZh.length
+                  const endP = isPreFromZhPrefix ? i + rule.zhPrefix.length : i + fullMatchZh.length
+
                   tokens.push({
                     zh: zhP,
                     vi: pVi,
                     hanviet: convertohanviets(zhP),
                     source: 'luatnhan',
-                    charStart: i,
-                    charEnd: i + (rule.zhPrefix ? rule.zhPrefix.length : 1),
+                    charStart: startP,
+                    charEnd: endP,
                     paragraphText: text,
                   })
                 }
 
                 // Recursively translate the inner text {0}
-                const innerTokens = this.translateToTokens(innerZh)
+                const innerTokens = this.translateToTokens(innerZh, isSentenceStart)
                 const innerOffset = i + rule.zhPrefix.length
                 for (const it of innerTokens) {
                   const adjustedToken = { ...it }
@@ -369,22 +517,30 @@ class TranslatorEngine {
                     adjustedToken.charEnd += innerOffset
                   }
                   adjustedToken.paragraphText = text
-                  if (isSentenceStart && adjustedToken.vi.length > 0) {
-                    adjustedToken.vi = this.capitalize(adjustedToken.vi)
-                    isSentenceStart = false
-                  }
                   tokens.push(adjustedToken)
+                }
+                if (innerTokens.length > 0 && innerTokens.some(t => t.vi.trim().length > 0)) {
+                  isSentenceStart = false
                 }
 
                 if (viSuf.length > 0) {
-                  const zhS = rule.zhSuffix || rule.zhPrefix || rule.rawZh
+                  let sVi = viSuf
+                  if (isSentenceStart) {
+                    sVi = this.capitalize(sVi)
+                    isSentenceStart = false
+                  }
+                  const isSufFromZhSuffix = rule.zhSuffix.length > 0
+                  const zhS = isSufFromZhSuffix ? rule.zhSuffix : rule.zhPrefix || rule.rawZh
+                  const startS = isSufFromZhSuffix ? i + rule.zhPrefix.length + innerZh.length : i
+                  const endS = isSufFromZhSuffix ? i + fullMatchZh.length : i + rule.zhPrefix.length
+
                   tokens.push({
                     zh: zhS,
-                    vi: viSuf,
+                    vi: sVi,
                     hanviet: convertohanviets(zhS),
                     source: 'luatnhan',
-                    charStart: i + rule.zhPrefix.length + innerZh.length,
-                    charEnd: i + fullMatchZh.length,
+                    charStart: startS,
+                    charEnd: endS,
                     paragraphText: text,
                   })
                 }
@@ -423,6 +579,11 @@ class TranslatorEngine {
 
         for (let len = searchMax; len >= 1; len--) {
           const sub = text.substring(i, i + len)
+          
+          // If phrase is blacklisted, skip to shorter matches
+          if (this.blacklistSet.has(sub)) {
+            continue
+          }
 
           // 1. Highest Priority: Custom Name
           if (this.customMap.has(sub)) {
@@ -449,13 +610,22 @@ class TranslatorEngine {
           break
         }
 
+        // 3.5. Priority 3.5: Context-aware disambiguation (see resolveContextualMeaning)
+        if (!this.customMap.has(sub)) {
+          const contextual = this.resolveContextualMeaning(sub, i, len, n, text, tokens, isSentenceStart)
+          if (contextual !== undefined) {
+            matchedZh = sub
+            matchedVi = contextual
+            source = 'vp'
+            break
+          }
+        }
+
         // 4. Priority 4: Clean grammatical particles when len === 1
         if (len === 1) {
           if (sub === '的') {
-            const nextChar = i + 1 < n ? text[i + 1] : ''
-            const isAtClauseEnd = i === n - 1 || PUNCT_SET.has(nextChar)
             matchedZh = sub
-            matchedVi = isAtClauseEnd ? '' : 'của'
+            matchedVi = ''
             source = 'vp'
             break
           }
@@ -524,16 +694,13 @@ class TranslatorEngine {
       // Clean up trailing " đích" from any dictionary match ending in 的
       if (matchedZh.endsWith('的') && source !== 'custom' && matchedZh !== '目的' && matchedZh !== '标的') {
         if (/(?:^|\s)đích$/i.test(matchedVi)) {
-          const nextChar = i + matchedZh.length < n ? text[i + matchedZh.length] : ''
-          const isAtClauseEnd = i + matchedZh.length === n || PUNCT_SET.has(nextChar)
-          const replacement = isAtClauseEnd ? '' : ' của'
-          matchedVi = matchedVi.replace(/(?:^|\s)đích$/i, replacement).trim()
+          matchedVi = matchedVi.replace(/(?:^|\s)đích$/i, '').trim()
         }
       }
       // Clean up leading "đích " from any dictionary match starting with 的
       if (matchedZh.startsWith('的') && source !== 'custom' && matchedZh.length > 1) {
         if (/^đích(?:$|\s+)/i.test(matchedVi)) {
-          matchedVi = matchedVi.replace(/^đích(?:$|\s+)/i, 'của ').trim()
+          matchedVi = matchedVi.replace(/^đích(?:$|\s+)/i, '').trim()
         }
       }
       // Clean up trailing " liễu" from any dictionary match ending in 了
@@ -565,114 +732,7 @@ class TranslatorEngine {
       i += matchedZh.length
     }
 
-    return this.optimizeVietnameseSyntax(tokens)
-  }
-
-  /**
-   * Optimize Vietnamese grammar and word order (Đảo ngữ phương vị từ & định ngữ)
-   */
-  private optimizeVietnameseSyntax(tokens: TranslatedToken[]): TranslatedToken[] {
-    if (!tokens || tokens.length <= 1) return tokens
-
-    const result = [...tokens]
-
-    // 1. Attributive inversion with 的 (Đảo định ngữ A + 的/của + B -> B + A)
-    // E.g., [kín mít] [của] [phòng tắm] -> [phòng tắm] [kín mít]
-    for (let i = 1; i < result.length - 1; i++) {
-      const deToken = result[i]
-      if (deToken.zh === '的' || deToken.vi.toLowerCase() === 'của' || deToken.vi.toLowerCase() === 'đích') {
-        const prevToken = result[i - 1]
-        const nextToken = result[i + 1]
-
-        // Only invert if neither is punctuation or special particles
-        if (
-          prevToken && nextToken &&
-          prevToken.source !== 'punct' && nextToken.source !== 'punct' &&
-          !['了', '呢', '吗', '啊', '着', '过', '在', '从', '到', '和', '与', '被', '把', '是', '有'].includes(prevToken.zh) &&
-          !['了', '呢', '吗', '啊', '着', '过', '在', '从', '到', '和', '与', '被', '把', '是', '有'].includes(nextToken.zh)
-        ) {
-          // Check if prevToken is an adjective/attributive modifier (not a pronoun like "tôi", "hắn", "anh ấy")
-          const isPronounOrName = prevToken.source === 'pronouns' || prevToken.source === 'names'
-          if (!isPronounOrName) {
-            // Invert: B comes before A, drop unnecessary "của"/"đích"
-            result.splice(i - 1, 3, nextToken, prevToken)
-            // Adjust loop index since we replaced 3 tokens with 2
-            i = Math.max(0, i - 2)
-          }
-        }
-      }
-    }
-
-    // 2. Spatial / Locational Postposition Inversion (Đảo phương vị từ)
-    // E.g., [phòng tắm] [kín mít] [bên trong/trong] -> [trong/bên trong] [phòng tắm] [kín mít]
-    const locationalMap: Record<string, string> = {
-      '里面': 'trong', '里': 'trong', '内': 'trong', '中': 'trong',
-      '外面': 'ngoài', '外': 'ngoài',
-      '上面': 'trên', '上': 'trên',
-      '下面': 'dưới', '下': 'dưới',
-      '前面': 'trước', '前': 'trước',
-      '后面': 'sau', '后': 'sau',
-      '旁边': 'cạnh', '旁': 'cạnh', '身旁': 'bên cạnh', '身边': 'bên cạnh',
-      '周围': 'xung quanh', '四周': 'xung quanh', '身遭': 'xung quanh'
-    }
-
-    for (let i = 1; i < result.length; i++) {
-      const token = result[i]
-      if (token.source === 'punct') continue
-
-      const locVi = locationalMap[token.zh]
-      if (locVi) {
-        // Normalize literal translations to clean Vietnamese preposition
-        if (/^(lý diện|lý|nội|trung|ngoại diện|ngoại|thượng diện|thượng|hạ diện|hạ|tiền diện|tiền|hậu diện|hậu|bàng|thân bàng|chu vi|tứ chu)$/i.test(token.vi)) {
-          token.vi = locVi
-        }
-
-        // Find the start of the preceding noun phrase
-        let startIdx = i - 1
-        let stepCount = 0
-        while (startIdx >= 0 && stepCount < 4) {
-          const prev = result[startIdx]
-          if (prev.source === 'punct') break
-          if (['在', '从', '到', '和', '与', '跟', '被', '把', '是', '有', '看', '听', '说', '望', '向', '往', '走', '跑', '坐', '躺', '立', '站', '想', '要', '让', '使'].includes(prev.zh)) {
-            break
-          }
-          if (locationalMap[prev.zh]) break
-          startIdx--
-          stepCount++
-        }
-        startIdx++
-
-        if (startIdx < i && stepCount > 0) {
-          const [locToken] = result.splice(i, 1)
-          result.splice(startIdx, 0, locToken)
-          i = startIdx
-        }
-      }
-    }
-
-    // 3. Sentence capitalization cleanup after reordering
-    let capNext = true
-    for (let i = 0; i < result.length; i++) {
-      const t = result[i]
-      if (t.source === 'punct') {
-        if (['.', '!', '?', '。', '！', '？', '\n'].includes(t.zh) || ['.', '!', '?', '\n'].includes(t.vi)) {
-          capNext = true
-        }
-      } else if (t.vi && t.vi.length > 0) {
-        if (capNext) {
-          t.vi = t.vi.charAt(0).toUpperCase() + t.vi.slice(1)
-          capNext = false
-        } else if (t.source !== 'names' && t.source !== 'custom') {
-          if (t.source === 'number' || t.source === 'vp' || t.source === 'hanviet') {
-            if (/^[A-Z][a-zà-ỹ]*$/.test(t.vi) && !['Chương', 'Phần', 'Quyển', 'Tập'].includes(t.vi)) {
-              t.vi = t.vi.charAt(0).toLowerCase() + t.vi.slice(1)
-            }
-          }
-        }
-      }
-    }
-
-    return result
+    return tokens
   }
 
   /**

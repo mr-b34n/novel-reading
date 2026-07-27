@@ -188,9 +188,13 @@ export default function TranslateTab() {
                   <div className="dict-item-info">
                     <span className="dict-zh">{entry.zh}</span>
                     <span className="dict-arrow">→</span>
-                    <span className="dict-vi">{entry.vi}</span>
+                    {entry.isBlacklist ? (
+                      <span className="dict-vi" style={{ color: 'var(--accent)', fontStyle: 'italic' }}>[Blacklist]</span>
+                    ) : (
+                      <span className="dict-vi">{entry.vi}</span>
+                    )}
                     <span className="dict-scope-badge">
-                      {entry.chapterIndex === 'global' ? 'Toàn bộ' : `Chương ${entry.chapterIndex + 1}`}
+                      {entry.chapterIndex === 'global_all' ? 'Mọi truyện' : entry.chapterIndex === 'global' ? 'Toàn truyện' : `Chương ${(entry.chapterIndex as number) + 1}`}
                     </span>
                   </div>
                   <button

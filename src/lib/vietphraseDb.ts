@@ -42,11 +42,12 @@ async function getVpDB(): Promise<IDBPDatabase> {
 export interface CustomNameEntry {
   key: string // `${bookTitle}::${chapterIndex || 'global'}::${zh}`
   bookTitle: string
-  chapterIndex: number | 'global'
+  chapterIndex: number | 'global' | 'global_all'
   zh: string
   vi: string
   hanviet?: string
   createdAt: number
+  isBlacklist?: boolean
 }
 
 /**
@@ -60,10 +61,11 @@ export async function saveCustomName(entry: CustomNameEntry): Promise<void> {
 /**
  * Get custom user names for a specific book and chapter
  */
-export async function getCustomNamesForChapter(bookTitle: string, chapterIndex: number | 'global'): Promise<CustomNameEntry[]> {
+export async function getCustomNamesForChapter(bookTitle: string, chapterIndex: number | 'global' | 'global_all'): Promise<CustomNameEntry[]> {
   const db = await getVpDB()
   const all: CustomNameEntry[] = await db.getAll(STORE_CUSTOM)
   return all.filter((e) => {
+    if (e.chapterIndex === 'global_all') return true
     if (e.bookTitle !== bookTitle) return false
     return e.chapterIndex === 'global' || e.chapterIndex === chapterIndex
   }).sort((a, b) => b.zh.length - a.zh.length)
@@ -166,7 +168,24 @@ export async function loadVietphraseMap(): Promise<Record<string, string>> {
   const values = await db.getAll(STORE_VP)
   const map: Record<string, string> = {}
   for (let i = 0; i < keys.length; i++) {
-    map[keys[i] as string] = values[i] as string
+    let k = keys[i] as string
+    let v = values[i] as string
+    
+    // Clean up dictionary keys that end with '的' (prevents shadowing custom VPs)
+    let isStripped = false
+    if (k.endsWith('的') && k.length > 2 && !['目的', '标的', '真的', '有的', '是的', '似的', '别的', '谁的', '什么的'].includes(k)) {
+      k = k.slice(0, -1)
+      v = v.replace(/(?:^|\s)đích$/i, '').replace(/(?:^|\s)của$/i, '').trim()
+      isStripped = true
+    }
+
+    if (!map[k]) {
+      map[k] = v
+    } else {
+      if (!isStripped && !map[k].includes(v)) {
+        map[k] = map[k] + ' | ' + v
+      }
+    }
   }
   return map
 }
@@ -180,7 +199,23 @@ export async function loadNamesMap(): Promise<Record<string, string>> {
   const values = await db.getAll(STORE_NAMES)
   const map: Record<string, string> = {}
   for (let i = 0; i < keys.length; i++) {
-    map[keys[i] as string] = values[i] as string
+    let k = keys[i] as string
+    let v = values[i] as string
+    
+    let isStripped = false
+    if (k.endsWith('的') && k.length > 2 && !['目的', '标的', '真的', '有的', '是的', '似的', '别的', '谁的', '什么的'].includes(k)) {
+      k = k.slice(0, -1)
+      v = v.replace(/(?:^|\s)đích$/i, '').replace(/(?:^|\s)của$/i, '').trim()
+      isStripped = true
+    }
+
+    if (!map[k]) {
+      map[k] = v
+    } else {
+      if (!isStripped && !map[k].includes(v)) {
+        map[k] = map[k] + ' | ' + v
+      }
+    }
   }
   return map
 }

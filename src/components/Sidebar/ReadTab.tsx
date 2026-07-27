@@ -115,6 +115,15 @@ export default function ReadTab() {
             onChange={(e) => updateSettings({ dropcap: e.target.checked })}
           />
         </div>
+        <div className="sp-row">
+          <label>Vuốt để qua chương (Mobile)</label>
+          <input
+            type="checkbox"
+            className="toggle"
+            checked={settings.swipeToChange ?? true}
+            onChange={(e) => updateSettings({ swipeToChange: e.target.checked })}
+          />
+        </div>
       </div>
 
       <div className="sp-section" style={{ border: 'none', marginTop: 10 }}>

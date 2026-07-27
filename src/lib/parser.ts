@@ -17,7 +17,7 @@ function isChapterHeader(line: string): boolean {
   return CHAPTER_PATTERNS.some(p => p.test(trimmed))
 }
 
-export function parseTxt(raw: string): Chapter[] {
+export function parseTxt(raw: string): { chapters: Chapter[], intro?: string } {
   const lines = raw
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
@@ -68,11 +68,17 @@ export function parseTxt(raw: string): Chapter[] {
     })
   }
 
-  // Deduplicate chapters with duplicate titles (keep chapter with longer/fuller content)
+  let intro = ''
   const finalChapters: Chapter[] = []
   const titleIndexMap = new Map<string, number>()
 
   for (const ch of validChapters) {
+    if (isIntroChapter(ch)) {
+      if (intro) intro += '\n\n'
+      intro += ch.content
+      continue
+    }
+
     const cleanTitle = ch.title.trim()
     if (cleanTitle && titleIndexMap.has(cleanTitle)) {
       const existingIdx = titleIndexMap.get(cleanTitle)!
@@ -89,7 +95,7 @@ export function parseTxt(raw: string): Chapter[] {
     }
   }
 
-  return finalChapters
+  return { chapters: finalChapters, intro }
 }
 
 export function isIntroChapter(ch: Chapter): boolean {

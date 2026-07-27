@@ -3,11 +3,10 @@ import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
 import Sidebar from '../Sidebar/Sidebar'
 import Reader from '../Reader/Reader'
-import DictManagerModal from '../Sidebar/DictManagerModal'
 import './AppLayout.css'
 
 export default function AppLayout() {
-  const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab, setCurrentView, showDictModal, setShowDictModal } = useUiStore()
+  const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab, setCurrentView, setShowDictModal } = useUiStore()
   const { enableTranslate } = useReaderStore()
   const [menuExpanded, setMenuExpanded] = useState(false)
 
@@ -52,8 +51,6 @@ export default function AppLayout() {
       <main className="main-reader">
         <Reader />
       </main>
-
-      {showDictModal && <DictManagerModal onClose={() => setShowDictModal(false)} />}
 
       {/* Floating Menu Overlay backdrop when menu is expanded */}
       {menuExpanded && (

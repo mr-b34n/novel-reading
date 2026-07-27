@@ -71,9 +71,8 @@ export default function BookDetailView() {
   }
 
   // Find intro chapter & content
-  const introChapter = book.chapters.find((ch) => isIntroChapter(ch) || ch.title.toLowerCase().includes('giới thiệu'))
-  const introContent = introChapter
-    ? introChapter.content
+  const introContent = book.intro
+    ? book.intro
     : (book.chapters[0]?.content || '')
 
   // Exclude intro chapter from the main chapter grid if there are other chapters

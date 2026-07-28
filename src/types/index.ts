@@ -13,6 +13,7 @@ export interface Chapter {
   content: string
   subtitle?: string
   isIntro?: boolean
+  customNumber?: string
   translatedTokens?: any[]
   translatedText?: string
 }

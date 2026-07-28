@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslateStore } from '@/stores/useTranslateStore'
 import { useReaderStore } from '@/stores/useReaderStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
@@ -107,8 +107,36 @@ export default function ChapterContent({ content }: ChapterContentProps) {
     }
   }, [bookTitle, currentChapter, mode, paragraphs, enableTranslate, isDbLoaded, retranslateTrigger])
 
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null)
+  const isScrollingRef = useRef(false)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches && e.touches.length === 1) {
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      isScrollingRef.current = false
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos.current || !e.touches || e.touches.length !== 1) return
+    const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x)
+    const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y)
+    if (dx > 8 || dy > 8) {
+      isScrollingRef.current = true
+    }
+  }
+
+  const handleTouchEnd = () => {
+    if (isScrollingRef.current) {
+      setTimeout(() => {
+        isScrollingRef.current = false
+      }, 300)
+    }
+  }
+
   const handleTokenClick = (token: TranslatedToken) => {
     if (token.source === 'punct') return
+    if (isScrollingRef.current) return
     setSelectedToken(token)
   }
 
@@ -205,7 +233,7 @@ export default function ChapterContent({ content }: ChapterContentProps) {
     })
 
     return (
-      <>
+      <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
         {wordsByPara.map((words, i) => {
           if (!words) return null
           const tokens = displayTokens[i] || []
@@ -240,13 +268,13 @@ export default function ChapterContent({ content }: ChapterContentProps) {
             onClose={() => setSelectedToken(null)}
           />
         )}
-      </>
+      </div>
     )
   }
 
   // 3. Normal Translation Mode (Dual / Replace)
   return (
-    <>
+    <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       {paragraphs.map((original, i) => {
         const tokens = displayTokens[i] || []
 
@@ -268,6 +296,6 @@ export default function ChapterContent({ content }: ChapterContentProps) {
           onClose={() => setSelectedToken(null)}
         />
       )}
-    </>
+    </div>
   )
 }

@@ -83,6 +83,11 @@ export default function ChapterTab() {
                   <span className="ch-index">#{index + 1}</span>
                   <span className="ch-name">
                     {cleanTitle}
+                    {ch.customNumber && (
+                      <span style={{ marginLeft: 6, fontSize: '0.75rem', padding: '1px 5px', background: 'var(--paper3)', color: 'var(--gold2)', borderRadius: '3px' }}>
+                        Số: {ch.customNumber}
+                      </span>
+                    )}
                     {ch.translatedTokens && (
                       <span title="Đã lưu bản dịch" style={{ marginLeft: 6, color: 'var(--gold2)', fontSize: '0.8em' }}>
                         <i className="ti ti-check" />

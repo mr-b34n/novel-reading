@@ -2,13 +2,13 @@ import type { Chapter } from '@/types'
 
 // ===================== TXT PARSER =====================
 // Detects chapter boundaries using common patterns like:
-//   第一章 Title, 第001章 Title, Chapter 1 Title, Chương 1, etc.
+//   第一章 Title, 第001章 Title, Chapter 1 Title, Chương 1, 44.5章, 序章, 练笔简章, etc.
 
 const CHAPTER_PATTERNS = [
-  /^第\s*[\d〇零一二三四五六七八九十百千万亿]+\s*[章节回]/,
-  /^Chapter\s+\d+/i,
-  /^Chương\s+\d+/i,
-  /^CHAPTER\s+\d+/i,
+  /^[【\[(]?\s*第\s*[\d〇零一二三四五六七八九十百千万亿\.]+\s*[章节回集]/,
+  /^[【\[(]?\s*(?:Chapter|Chương|Chuong|Hồi|Tiết|Ch)\s+[\d\.]+/i,
+  /^[【\[(]?\s*[\d\.]+\s*[章节]/,
+  /^[【\[(]?\s*(?:序章|序言|引子|楔子|尾声|尾聲|后记|後記|前传|前傳|外传|外傳|番外|练笔|練筆|简章|簡章|lời tựa|chương mở đầu|tiết tử|vĩ thanh|phiên ngoại|ngoại truyện)/i,
 ]
 
 function isChapterHeader(line: string): boolean {
@@ -29,7 +29,9 @@ export function parseTxt(raw: string): { chapters: Chapter[], intro?: string } {
 
   for (const line of lines) {
     const trimmed = line.trim()
-    if (isChapterHeader(trimmed)) {
+    const isCh = isChapterHeader(trimmed)
+
+    if (isCh) {
       if (currentTitle || currentLines.length > 0) {
         rawChapters.push({ title: currentTitle, lines: currentLines })
       }
@@ -73,7 +75,7 @@ export function parseTxt(raw: string): { chapters: Chapter[], intro?: string } {
   const titleIndexMap = new Map<string, number>()
 
   for (const ch of validChapters) {
-    if (isIntroChapter(ch)) {
+    if (ch.isIntro) {
       if (intro) intro += '\n\n'
       intro += ch.content
       continue
@@ -99,13 +101,7 @@ export function parseTxt(raw: string): { chapters: Chapter[], intro?: string } {
 }
 
 export function isIntroChapter(ch: Chapter): boolean {
-  if (ch.isIntro) return true
-  const title = (ch.title || '').trim().toLowerCase()
-  return /^ch[uưừự][oơờợ]ng\s*0$/.test(title)
-    || title === 'giới thiệu'
-    || title === 'gioi thieu'
-    || title === 'lời tựa'
-    || title === 'loi tua'
+  return ch.isIntro === true || ch.customNumber === '0'
 }
 
 export function formatBookChapterInfo(chapters: Chapter[]): string {

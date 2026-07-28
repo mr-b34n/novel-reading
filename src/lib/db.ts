@@ -39,4 +39,25 @@ export async function deleteBook(name: string): Promise<void> {
   const db = await getDB()
   await db.delete(STORE_NAME, name)
   localStorage.removeItem('novreader_pos_' + name)
+  localStorage.removeItem('novreader_scroll_' + name)
+}
+
+export async function renameBook(oldName: string, newName: string): Promise<void> {
+  if (oldName === newName || !newName.trim()) return
+  const db = await getDB()
+  const book = await db.get(STORE_NAME, oldName)
+  if (!book) return
+  await db.delete(STORE_NAME, oldName)
+  const newBook = { ...book, name: newName.trim(), lastAccessed: Date.now() }
+  await db.put(STORE_NAME, newBook)
+  const pos = localStorage.getItem('novreader_pos_' + oldName)
+  if (pos !== null) {
+    localStorage.setItem('novreader_pos_' + newName.trim(), pos)
+    localStorage.removeItem('novreader_pos_' + oldName)
+  }
+  const scroll = localStorage.getItem('novreader_scroll_' + oldName)
+  if (scroll !== null) {
+    localStorage.setItem('novreader_scroll_' + newName.trim(), scroll)
+    localStorage.removeItem('novreader_scroll_' + oldName)
+  }
 }

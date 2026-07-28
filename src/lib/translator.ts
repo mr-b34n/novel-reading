@@ -448,6 +448,27 @@ class TranslatorEngine {
         continue
       }
 
+      // Check if it's an ASCII / Latin / Vietnamese alphanumeric word (not CJK Chinese character)
+      // This prevents Vietnamese words like "Tiên", "đồ", or English like "VIP", "System", "MC" from being split letter-by-letter!
+      if (!/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(char)) {
+        let j = i
+        while (j < n && !PUNCT_SET.has(text[j]) && !/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(text[j])) {
+          j++
+        }
+        const nonCjkWord = text.substring(i, j)
+        tokens.push({
+          zh: nonCjkWord,
+          vi: nonCjkWord,
+          hanviet: nonCjkWord,
+          source: 'hanviet',
+          charStart: i,
+          charEnd: j,
+          paragraphText: text,
+        })
+        i = j
+        continue
+      }
+
       // Priority 0: Luật Nhân (Grammar pattern multiplication rules)
       let matchedLuatNhan = false
       if (this.luatNhanIndex.size > 0) {

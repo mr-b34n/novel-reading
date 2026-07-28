@@ -6,6 +6,7 @@ interface ReaderStore {
   chapters: Chapter[]
   bookTitle: string
   currentChapter: number
+  chapterProgress: number
   enableTranslate: boolean
 
   // TTS runtime (not persisted)
@@ -19,6 +20,7 @@ interface ReaderStore {
   // Actions
   setBook: (title: string, chapters: Chapter[], enableTranslate?: boolean) => void
   setCurrentChapter: (idx: number) => void
+  setChapterProgress: (pct: number) => void
   setTtsActive: (v: boolean) => void
   setTtsPlaying: (v: boolean) => void
   setTtsCursor: (v: number) => void
@@ -34,6 +36,7 @@ export const useReaderStore = create<ReaderStore>()((set) => ({
   chapters: [],
   bookTitle: '',
   currentChapter: 0,
+  chapterProgress: 0,
   enableTranslate: true,
   ttsActive: false,
   ttsPlaying: false,
@@ -43,8 +46,9 @@ export const useReaderStore = create<ReaderStore>()((set) => ({
   ttsRate: 1,
 
   setBook: (title, chapters, enableTranslate = true) =>
-    set({ bookTitle: title, chapters, currentChapter: 0, enableTranslate, ttsWords: [], ttsCursor: 0 }),
-  setCurrentChapter: (idx) => set({ currentChapter: idx }),
+    set({ bookTitle: title, chapters, currentChapter: 0, chapterProgress: 0, enableTranslate, ttsWords: [], ttsCursor: 0 }),
+  setCurrentChapter: (idx) => set({ currentChapter: idx, chapterProgress: 0 }),
+  setChapterProgress: (pct) => set({ chapterProgress: pct }),
   setTtsActive: (v) => set({ ttsActive: v }),
   setTtsPlaying: (v) => set({ ttsPlaying: v }),
   setTtsCursor: (v) => set({ ttsCursor: v }),
@@ -75,5 +79,5 @@ export const useReaderStore = create<ReaderStore>()((set) => ({
       }
     }),
   clearBook: () =>
-    set({ chapters: [], bookTitle: '', currentChapter: 0, enableTranslate: true, ttsWords: [], ttsCursor: 0 }),
+    set({ chapters: [], bookTitle: '', currentChapter: 0, chapterProgress: 0, enableTranslate: true, ttsWords: [], ttsCursor: 0 }),
 }))

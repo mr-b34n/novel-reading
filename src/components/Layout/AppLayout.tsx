@@ -7,7 +7,7 @@ import './AppLayout.css'
 
 export default function AppLayout() {
   const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab, setCurrentView, setShowDictModal } = useUiStore()
-  const { enableTranslate } = useReaderStore()
+  const { enableTranslate, chapterProgress } = useReaderStore()
   const [menuExpanded, setMenuExpanded] = useState(false)
 
   const TABS = [
@@ -77,14 +77,39 @@ export default function AppLayout() {
           })}
         </div>
 
-        <button
-          className="fm-trigger-btn"
-          onClick={() => setMenuExpanded(!menuExpanded)}
-          title={menuExpanded ? 'Đóng Menu' : 'Mở Menu'}
-          aria-label={menuExpanded ? 'Đóng Menu' : 'Mở Menu'}
-        >
-          <i className={`ti ${menuExpanded ? 'ti-x' : 'ti-menu-2'}`} />
-        </button>
+        <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="60" height="60" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
+            <circle
+              cx="30"
+              cy="30"
+              r="27"
+              stroke="var(--paper3)"
+              strokeWidth="3.5"
+              fill="none"
+              opacity="0.6"
+            />
+            <circle
+              cx="30"
+              cy="30"
+              r="27"
+              stroke="var(--gold)"
+              strokeWidth="3.5"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 27}
+              strokeDashoffset={(2 * Math.PI * 27) * (1 - (chapterProgress || 0) / 100)}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 0.15s ease' }}
+            />
+          </svg>
+          <button
+            className="fm-trigger-btn"
+            onClick={() => setMenuExpanded(!menuExpanded)}
+            title={menuExpanded ? 'Đóng Menu' : `Mở Menu (Tiến độ chương: ${chapterProgress || 0}%)`}
+            aria-label={menuExpanded ? 'Đóng Menu' : 'Mở Menu'}
+          >
+            <i className={`ti ${menuExpanded ? 'ti-x' : 'ti-menu-2'}`} />
+          </button>
+        </div>
       </div>
     </div>
   )

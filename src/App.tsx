@@ -5,12 +5,17 @@ import BookDetailView from '@/components/Library/BookDetailView'
 import DictManagerModal from '@/components/Sidebar/DictManagerModal'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useUiStore } from '@/stores/useUiStore'
+import { useTranslateStore } from '@/stores/useTranslateStore'
 
 function App() {
   const globalDark = useSettingsStore((s) => s.settings.globalDark)
   const currentView = useUiStore((s) => s.currentView)
   const showDictModal = useUiStore((s) => s.showDictModal)
   const setShowDictModal = useUiStore((s) => s.setShowDictModal)
+
+  useEffect(() => {
+    useTranslateStore.getState().initDb()
+  }, [])
 
   useEffect(() => {
     if (globalDark) {

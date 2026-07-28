@@ -315,6 +315,19 @@ export async function saveChapterCache(
       updatedAt: Date.now(),
     }
     await db.put(STORE_CACHE, entry)
+
+    // Also update Book object so translations are permanently saved with the book
+    try {
+      const { loadBook, saveBook } = await import('./db')
+      const book = await loadBook(bookTitle)
+      if (book && book.chapters && book.chapters[chapterIndex]) {
+        book.chapters[chapterIndex].translatedTokens = tokens
+        if (translatedText) book.chapters[chapterIndex].translatedText = translatedText
+        await saveBook(book)
+      }
+    } catch (bookErr) {
+      console.warn('Failed to save translation to Book object', bookErr)
+    }
   } catch (err) {
     console.warn('Failed to save chapter cache', err)
   }

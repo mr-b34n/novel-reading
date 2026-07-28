@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
+import { useTranslateStore } from '@/stores/useTranslateStore'
 import { getAllBooks, saveBook } from '@/lib/db'
 import { parseTxt } from '@/lib/parser'
 import { translator } from '@/lib/translator'
@@ -32,6 +33,7 @@ interface PendingUpload {
   intro?: string
   enableTranslate: boolean
   nameOption: 'edit' | 'translate' | 'none'
+  setFirstAsIntro?: boolean
 }
 
 export default function LibraryView() {
@@ -68,6 +70,14 @@ export default function LibraryView() {
       return
     }
 
+    // Requirement 7: check VP database before importing book
+    await useTranslateStore.getState().initDb()
+    if (useTranslateStore.getState().vpCount === 0) {
+      alert('Vui lòng nhập từ điển VietPhrase (VP) trước khi thêm truyện để hệ thống có thể hỗ trợ dịch thuật!')
+      useUiStore.getState().setShowDictModal(true)
+      return
+    }
+
     setLoading(true)
     const reader = new FileReader()
     reader.onload = async (event) => {
@@ -83,14 +93,21 @@ export default function LibraryView() {
         const defaultTitle = file.name.replace(/\.txt$/i, '').trim()
         
         // Auto-detect if file contains Chinese characters or Chinese keywords
-        const containsChinese = /[\u4e00-\u9fa5]/.test(content.slice(0, 3000))
+        const containsChinese = /[\u4e00-\u9fa5]/.test(content.slice(0, 3000)) || /[\u4e00-\u9fa5]/.test(defaultTitle)
+        let suggestedTitle = defaultTitle
+        if (containsChinese) {
+          await useTranslateStore.getState().initDb()
+          const translated = translator.translateText(defaultTitle)
+          if (translated) suggestedTitle = translated
+        }
 
         setPendingUpload({
-          name: defaultTitle,
+          name: suggestedTitle,
           chapters: parsed.chapters,
           intro: parsed.intro,
           enableTranslate: containsChinese, // default checked if Chinese detected
-          nameOption: 'edit'
+          nameOption: containsChinese ? 'translate' : 'edit',
+          setFirstAsIntro: false
         })
       } catch (err) {
         console.error(err)
@@ -111,9 +128,11 @@ export default function LibraryView() {
       let finalIntro = pendingUpload.intro
 
       if (pendingUpload.enableTranslate) {
-        if (pendingUpload.nameOption === 'translate') {
-          const translatedName = translator.translateText(finalBookName)
-          if (translatedName) finalBookName = translatedName
+        await useTranslateStore.getState().initDb()
+
+        const translatedName = translator.translateText(finalBookName)
+        if (translatedName && (translatedName !== finalBookName || /[\u4e00-\u9fa5]/.test(finalBookName))) {
+          finalBookName = translatedName
         }
 
         if (finalIntro) {
@@ -124,6 +143,12 @@ export default function LibraryView() {
           ...ch,
           title: translator.translateText(ch.title) || ch.title,
         }))
+      }
+
+      if (pendingUpload.setFirstAsIntro && finalChapters.length > 0) {
+        finalChapters = finalChapters.map((ch, idx) =>
+          idx === 0 ? { ...ch, isIntro: true, customNumber: '0' } : ch
+        )
       }
 
       const newBook: Book = {
@@ -230,7 +255,15 @@ export default function LibraryView() {
 
             <button
               className="btn-primary lib-upload-btn"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={async () => {
+                await useTranslateStore.getState().initDb()
+                if (useTranslateStore.getState().vpCount === 0) {
+                  alert('Vui lòng nhập từ điển VietPhrase (VP) trước khi thêm truyện để hệ thống có thể dịch thuật!')
+                  useUiStore.getState().setShowDictModal(true)
+                  return
+                }
+                fileInputRef.current?.click()
+              }}
               disabled={loading}
               title="Tải sách (.txt)"
             >
@@ -334,31 +367,29 @@ export default function LibraryView() {
             <div className="um-body">
               <div className="um-field">
                 <label>Tên truyện:</label>
-                <input
-                  type="text"
-                  value={pendingUpload.name}
-                  onChange={(e) => setPendingUpload({ ...pendingUpload, name: e.target.value })}
-                />
-                {pendingUpload.enableTranslate && (
-                  <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '13px', color: 'var(--ink2)' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        checked={pendingUpload.nameOption === 'edit'}
-                        onChange={() => setPendingUpload({ ...pendingUpload, nameOption: 'edit' })}
-                      />
-                      Giữ nguyên
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        checked={pendingUpload.nameOption === 'translate'}
-                        onChange={() => setPendingUpload({ ...pendingUpload, nameOption: 'translate' })}
-                      />
-                      Tự động dịch
-                    </label>
-                  </div>
-                )}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={pendingUpload.name}
+                    onChange={(e) => setPendingUpload({ ...pendingUpload, name: e.target.value })}
+                    style={{ flex: 1 }}
+                  />
+                  {pendingUpload.enableTranslate && (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ border: '1px solid var(--gold)', color: 'var(--gold)', padding: '8px 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                      onClick={async () => {
+                        await useTranslateStore.getState().initDb()
+                        const translated = translator.translateText(pendingUpload.name)
+                        if (translated) setPendingUpload({ ...pendingUpload, name: translated })
+                      }}
+                      title="Dịch tên truyện sang Tiếng Việt"
+                    >
+                      <i className="ti ti-language" /> Dịch tên
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="um-stats">
@@ -376,13 +407,29 @@ export default function LibraryView() {
                     }
                   />
                   <div className="um-cb-text">
-                    <strong>Là truyện dịch / Convert (Bật công cụ Dịch thuật)</strong>
-                    <span>
-                      Bật nếu đây là truyện tiếng Trung / Convert cần dịch. Nếu tắt, văn bản hiển thị như truyện thường (không tách từng chữ) và ẩn các tính năng dịch.
-                    </span>
+                    <strong>Bật chế độ Dịch thuật (Truyện Convert / Tiếng Trung)</strong>
                   </div>
                 </label>
               </div>
+
+              {pendingUpload.chapters.length > 0 && (
+                <div className="um-intro-preview-box" style={{ background: 'var(--paper2)', border: '1px solid var(--paper3)', padding: '10px 12px', borderRadius: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={pendingUpload.setFirstAsIntro || false}
+                      onChange={(e) => setPendingUpload({ ...pendingUpload, setFirstAsIntro: e.target.checked })}
+                    />
+                    <span>Đặt chương đầu làm Chương 0 (Lời tựa / Giới thiệu)</span>
+                  </label>
+                  <div style={{ marginTop: '8px', padding: '6px 8px', background: 'var(--paper)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--ink2)', maxHeight: '70px', overflowY: 'auto', borderLeft: '3px solid var(--gold)' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '2px', color: 'var(--gold2)' }}>
+                      Xem trước ({pendingUpload.chapters[0].title || 'Chương đầu'}):
+                    </div>
+                    {pendingUpload.chapters[0].content.slice(0, 150)}...
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="um-footer">

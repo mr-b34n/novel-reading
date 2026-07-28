@@ -2,15 +2,17 @@ import { useEffect, useRef } from 'react'
 import { useReaderStore } from '@/stores/useReaderStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { parseTtsWords, initTTS, stopTts } from '@/lib/tts'
-import { parseChapterTitle } from '@/lib/chineseNumerals'
+import { formatCleanChapterTitle } from '@/lib/chineseNumerals'
 import WelcomeScreen from './WelcomeScreen'
 import ChapterContent from './ChapterContent'
 import './Reader.css'
 
 export default function Reader() {
-  const { chapters, bookTitle, currentChapter, setCurrentChapter, setTtsWords } = useReaderStore()
+  const { chapters, bookTitle, currentChapter, setCurrentChapter, setTtsWords, setChapterProgress } = useReaderStore()
   const settings = useSettingsStore((s) => s.settings)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const activeChapterRef = useRef<number | null>(null)
+  const activeBookRef = useRef<string | null>(null)
 
   const chapter = chapters[currentChapter]
 
@@ -18,17 +20,57 @@ export default function Reader() {
     initTTS()
   }, [])
 
+  const handleScroll = () => {
+    if (!scrollRef.current) return
+    // Prevent scroll events from saving or calculating during a chapter/book switch before DOM settles
+    if (activeChapterRef.current !== null && activeChapterRef.current !== currentChapter) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+    if (bookTitle && currentChapter >= 0) {
+      localStorage.setItem(`novreader_scroll_${bookTitle}`, scrollTop.toString())
+    }
+    const maxScroll = scrollHeight - clientHeight
+    const pct = maxScroll > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / maxScroll) * 100))) : (scrollTop > 0 ? 100 : 0)
+    setChapterProgress(pct)
+  }
+
   useEffect(() => {
-    // Save reading position in localStorage
+    // Save reading chapter index in localStorage
     if (bookTitle && currentChapter >= 0) {
       localStorage.setItem('novreader_pos_' + bookTitle, currentChapter.toString())
     }
 
-    // Reset scroll when chapter index or book changes
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = 0
-    }
-  }, [currentChapter, bookTitle])
+    const isNewBook = activeBookRef.current !== null && activeBookRef.current !== bookTitle
+    const isChapterSwitch = !isNewBook && activeChapterRef.current !== null && activeChapterRef.current !== currentChapter
+    activeBookRef.current = bookTitle
+    activeChapterRef.current = currentChapter
+
+    // Restore scroll position on initial load / same chapter re-render, or reset to top on chapter change
+    const timer = setTimeout(() => {
+      if (!scrollRef.current) return
+      if (isChapterSwitch) {
+        // When switching chapters (forwards or backwards), reading progress MUST reset to the beginning (0).
+        // Only save progress for the chapter currently being read.
+        scrollRef.current.scrollTop = 0
+        if (bookTitle) {
+          localStorage.setItem(`novreader_scroll_${bookTitle}`, '0')
+          localStorage.removeItem(`novreader_scroll_${bookTitle}_${currentChapter}`)
+        }
+        setChapterProgress(0)
+      } else {
+        // Initial load of the book (or same chapter re-render after translation finishes)
+        const savedScroll =
+          localStorage.getItem(`novreader_scroll_${bookTitle}`) ||
+          localStorage.getItem(`novreader_scroll_${bookTitle}_${currentChapter}`)
+        if (savedScroll && Number(savedScroll) > 0) {
+          scrollRef.current.scrollTop = Number(savedScroll)
+        } else {
+          scrollRef.current.scrollTop = 0
+        }
+        handleScroll()
+      }
+    }, 60)
+    return () => clearTimeout(timer)
+  }, [currentChapter, bookTitle, chapter?.content, chapter?.translatedText])
 
   useEffect(() => {
     // Parse TTS words for this chapter
@@ -96,20 +138,15 @@ export default function Reader() {
 
   return (
     <div className="reader-container" style={readerStyle}>
-      {/* Top progress bar */}
-      <div
-        className="top-progress-bar"
-        style={{ width: `${(currentChapter / Math.max(chapters.length - 1, 1)) * 100}%` }}
-      />
-
       <div 
         className="reader-scroll-area" 
         ref={scrollRef}
+        onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         <div className="reader-content-wrap">
-          <h1 className="chapter-heading">{parseChapterTitle(chapter.title) || chapter.title}</h1>
+          <h1 className="chapter-heading">{chapter.isIntro ? '' : `#${currentChapter + 1} - `}{formatCleanChapterTitle(chapter.title, currentChapter)}</h1>
           {chapter.subtitle && <div className="chapter-sub">{chapter.subtitle}</div>}
 
           <div

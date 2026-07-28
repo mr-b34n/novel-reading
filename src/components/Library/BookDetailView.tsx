@@ -1,21 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
-import { loadBook, deleteBook } from '@/lib/db'
+import { useTranslateStore } from '@/stores/useTranslateStore'
+import { loadBook, deleteBook, saveBook } from '@/lib/db'
 import { isIntroChapter } from '@/lib/parser'
 import { parseChapterTitle, formatCleanChapterTitle } from '@/lib/chineseNumerals'
+import { translator } from '@/lib/translator'
+import ChapterManagerModal from './ChapterManagerModal'
 import type { Book } from '@/types'
 import './BookDetailView.css'
 
 export default function BookDetailView() {
   const { selectedBookName, setCurrentView } = useUiStore()
   const { setBook, bookTitle: currentBookTitle, clearBook, setCurrentChapter } = useReaderStore()
+  const { isDbLoaded } = useTranslateStore()
 
   const [book, setBookData] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
   const [chapterSearch, setChapterSearch] = useState('')
   const [savedChapterIdx, setSavedChapterIdx] = useState<number>(0)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showChapterManager, setShowChapterManager] = useState(false)
 
   useEffect(() => {
     if (selectedBookName) {
@@ -40,6 +45,25 @@ export default function BookDetailView() {
       setCurrentView('library')
     }
   }, [selectedBookName, setCurrentView])
+
+  // Find intro chapter & content
+  const introContent = book?.intro
+    ? book.intro
+    : (book?.chapters?.[0]?.content || '')
+
+  const firstRealChapterIdx = useMemo(() => {
+    if (!book || !book.chapters?.length) return 0
+    return isIntroChapter(book.chapters[0]) && book.chapters.length > 1 ? 1 : 0
+  }, [book])
+
+  const displayIntro = useMemo(() => {
+    if (!introContent) return 'Không có đoạn giới thiệu.'
+    if (book?.enableTranslate && isDbLoaded) {
+      const translated = translator.translateText(introContent)
+      return translated || introContent
+    }
+    return introContent
+  }, [introContent, book?.enableTranslate, isDbLoaded])
 
   if (loading || !book) {
     return (
@@ -70,20 +94,15 @@ export default function BookDetailView() {
     }
   }
 
-  // Find intro chapter & content
-  const introContent = book.intro
-    ? book.intro
-    : (book.chapters[0]?.content || '')
-
-  // Exclude intro chapter from the main chapter grid if there are other chapters
-  const actualChapters = book.chapters.filter((ch) => !isIntroChapter(ch))
-  const chapterListToDisplay = actualChapters.length > 0 ? actualChapters : book.chapters
+  const chapterListToDisplay = book.chapters
 
   const filteredChapters = chapterListToDisplay.filter((ch, i) => {
     if (!chapterSearch.trim()) return true
     const title = parseChapterTitle(ch.title) || ch.title
-    const search = chapterSearch.toLowerCase()
-    return title.toLowerCase().includes(search) || (i + 1).toString() === search
+    const search = chapterSearch.toLowerCase().trim()
+    const isIntro = isIntroChapter(ch)
+    const numStr = isIntro ? '0' : (i + (book.chapters.length > 0 && isIntroChapter(book.chapters[0]) ? 0 : 1)).toString()
+    return title.toLowerCase().includes(search) || numStr === search || (i + 1).toString() === search
   })
 
   return (
@@ -119,16 +138,37 @@ export default function BookDetailView() {
           <div className="bd-info">
             <h1 className="bd-title">{book.name}</h1>
 
+            <div className="bd-actions" style={{ marginTop: '4px', marginBottom: '14px' }}>
+              {savedChapterIdx > 0 && (
+                <button className="btn-primary bd-btn-read" onClick={() => handleStartRead(savedChapterIdx)}>
+                  <i className="ti ti-player-play-filled" /> Đọc tiếp (Chương {savedChapterIdx + 1})
+                </button>
+              )}
+
+              <button className={savedChapterIdx > 0 ? "btn-ghost" : "btn-primary bd-btn-read"} onClick={() => handleStartRead(firstRealChapterIdx)}>
+                <i className="ti ti-book-2" /> Đọc từ đầu (Chương 1)
+              </button>
+
+              {(firstRealChapterIdx > 0 || book.intro) && (
+                <button className="btn-ghost" onClick={() => handleStartRead(0)}>
+                  <i className="ti ti-file-text" /> Đọc Giới thiệu (Chương 0)
+                </button>
+              )}
+
+              <button className="btn-ghost bd-btn-delete" onClick={() => setShowDeleteModal(true)}>
+                <i className="ti ti-trash" /> Xóa truyện
+              </button>
+            </div>
+
             <div className="bd-badges">
               <span className="bd-badge">
                 <i className="ti ti-list-numbered" /> {book.chapters.length} chương
               </span>
-              <span className="bd-badge">
-                <i className="ti ti-bookmark" />{' '}
-                {savedChapterIdx > 0
-                  ? `Đang đọc Ch. ${savedChapterIdx + 1}`
-                  : 'Chưa đọc'}
-              </span>
+              {(savedChapterIdx > 0 || (savedChapterIdx === 0 && book.chapters.length > 0 && isIntroChapter(book.chapters[0]))) && (
+                <span className="bd-badge">
+                  <i className="ti ti-bookmark" /> Đang đọc {savedChapterIdx === 0 && isIntroChapter(book.chapters[0]) ? 'Chương 0' : `Ch. ${savedChapterIdx + (book.chapters.length > 0 && isIntroChapter(book.chapters[0]) ? 0 : 1)}`}
+                </span>
+              )}
               {book.enableTranslate && (
                 <span className="bd-badge" title="Truyện có bật tính năng Dịch thuật">
                   <i className="ti ti-language" /> Truyện dịch
@@ -141,25 +181,8 @@ export default function BookDetailView() {
                 <i className="ti ti-file-text" /> Giới thiệu nội dung
               </h3>
               <div className="bd-intro-text">
-                {introContent || 'Không có đoạn giới thiệu.'}
+                {displayIntro}
               </div>
-            </div>
-
-            <div className="bd-actions">
-              <button className="btn-primary bd-btn-read" onClick={() => handleStartRead(savedChapterIdx)}>
-                <i className="ti ti-player-play-filled" />{' '}
-                {savedChapterIdx > 0 ? `Đọc tiếp (Chương ${savedChapterIdx + 1})` : 'Đọc từ đầu'}
-              </button>
-
-              {savedChapterIdx > 0 && (
-                <button className="btn-ghost" onClick={() => handleStartRead(0)}>
-                  <i className="ti ti-rotate-clockwise" /> Đọc từ đầu
-                </button>
-              )}
-
-              <button className="btn-ghost bd-btn-delete" onClick={() => setShowDeleteModal(true)}>
-                <i className="ti ti-trash" /> Xóa truyện
-              </button>
             </div>
           </div>
         </div>
@@ -168,17 +191,22 @@ export default function BookDetailView() {
         <section className="bd-chapters-section">
           <div className="bd-chapters-header">
             <h3>Danh sách chương ({chapterListToDisplay.length})</h3>
-            <div className="bd-chapter-search">
-              <i className="ti ti-search" />
-              <input
-                type="text"
-                placeholder="Tìm tên chương hoặc số..."
-                value={chapterSearch}
-                onChange={(e) => setChapterSearch(e.target.value)}
-              />
-              {chapterSearch && (
-                <button onClick={() => setChapterSearch('')}>×</button>
-              )}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="btn-ghost" style={{ border: '1px solid var(--gold)', color: 'var(--gold)' }} onClick={() => setShowChapterManager(true)}>
+                <i className="ti ti-list-check" /> Quản lý Chương
+              </button>
+              <div className="bd-chapter-search">
+                <i className="ti ti-search" />
+                <input
+                  type="text"
+                  placeholder="Tìm tên chương hoặc số..."
+                  value={chapterSearch}
+                  onChange={(e) => setChapterSearch(e.target.value)}
+                />
+                {chapterSearch && (
+                  <button onClick={() => setChapterSearch('')}>×</button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -189,7 +217,10 @@ export default function BookDetailView() {
               filteredChapters.map((ch) => {
                 const realIdx = book.chapters.indexOf(ch)
                 const isCurrent = realIdx === savedChapterIdx
-                const cleanTitle = formatCleanChapterTitle(ch.title, realIdx)
+                const isIntro = isIntroChapter(ch)
+                const isFirstIntro = book.chapters.length > 0 && isIntroChapter(book.chapters[0])
+                const numDisplay = isIntro ? '#0' : `#${realIdx + (isFirstIntro ? 0 : 1)}`
+                const cleanTitle = isIntro ? (ch.title || 'Chương 0 (Giới thiệu)') : formatCleanChapterTitle(ch.title, realIdx)
 
                 return (
                   <div
@@ -197,8 +228,9 @@ export default function BookDetailView() {
                     className={`bd-chapter-card ${isCurrent ? 'active' : ''}`}
                     onClick={() => handleStartRead(realIdx)}
                   >
-                    <span className="ch-num">#{realIdx + 1}</span>
+                    <span className="ch-num">{numDisplay}</span>
                     <span className="ch-title">{cleanTitle}</span>
+                    {ch.customNumber && <span className="ch-tag" style={{ background: 'var(--paper3)', color: 'var(--gold2)' }}>Số: {ch.customNumber}</span>}
                     {isCurrent && <span className="ch-tag">Vị trí đọc</span>}
                   </div>
                 )
@@ -229,6 +261,20 @@ export default function BookDetailView() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chapter Manager Modal */}
+      {showChapterManager && (
+        <ChapterManagerModal
+          book={book}
+          onClose={() => setShowChapterManager(false)}
+          onSave={async (updatedChapters) => {
+            const updatedBook = { ...book, chapters: updatedChapters }
+            await saveBook(updatedBook)
+            setBookData(updatedBook)
+            setBook(updatedBook.name, updatedChapters, updatedBook.enableTranslate)
+          }}
+        />
       )}
     </div>
   )

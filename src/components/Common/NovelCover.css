@@ -1,0 +1,185 @@
+.nc-container {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  user-select: none;
+}
+
+.nc-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+  transition: filter 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: filter, transform;
+}
+
+/* Blurred state */
+.nc-is-blurred .nc-blurred-img {
+  filter: blur(var(--cover-blur-px, 14px)) saturate(1.15);
+  transform: scale(1.09);
+}
+
+/* Hover to unblur when enabled */
+.nc-hover-unblur:hover .nc-blurred-img,
+.lib-card:hover .nc-hover-unblur .nc-blurred-img,
+.as-card:hover .nc-hover-unblur .nc-blurred-img,
+.as-rank-item:hover .nc-hover-unblur .nc-blurred-img,
+.as-modal-hero:hover .nc-hover-unblur .nc-blurred-img,
+.bd-hero:hover .nc-hover-unblur .nc-blurred-img {
+  filter: blur(0px) saturate(1) !important;
+  transform: scale(1) !important;
+}
+
+/* Quick Toggle Button on top-right of cover */
+.nc-overlay-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.nc-container:hover .nc-overlay-actions,
+.lib-card:hover .nc-overlay-actions,
+.as-card:hover .nc-overlay-actions,
+.bd-cover-wrap:hover .nc-overlay-actions,
+.as-modal-cover-wrap:hover .nc-overlay-actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* If on mobile touch, show always subtly */
+@media (hover: none) {
+  .nc-overlay-actions {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+}
+
+.nc-quick-btn {
+  background: rgba(18, 14, 10, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f3f4f6;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nc-quick-btn:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.nc-quick-btn.revealed {
+  background: rgba(16, 185, 129, 0.85);
+  border-color: #10b981;
+}
+
+.nc-quick-btn-tooltip {
+  display: none;
+}
+
+/* Fallback card styling */
+.nc-fallback {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.nc-fb-border {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  text-align: center;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+.nc-fb-ornament {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.nc-fb-title {
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.nc-fb-badge {
+  margin-top: 8px;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.nc-default-fallback {
+  width: 100%;
+  height: 100%;
+  background: var(--paper2);
+  border: 1px dashed var(--paper3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--ink3);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 10px;
+}
+
+.nc-blurred-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  color: #f3f4f6;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}

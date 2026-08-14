@@ -264,21 +264,43 @@
   color: var(--gold2);
 }
 
-/* MOBILE STYLES - Floating card */
+/* MOBILE STYLES - Bottom Sheet */
 @media (max-width: 600px) {
   .sidebar {
-    top: 12px;
-    bottom: 12px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    border-radius: 20px;
+    top: 5vh;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
     border: 1px solid var(--paper3);
-    transform: translateY(calc(100% + 24px));
+    border-bottom: none;
+    transform: translateY(105%);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   
   .sidebar.open {
     transform: translateY(0);
+  }
+
+  .sidebar-head {
+    padding: 14px 18px 10px;
+  }
+
+  .sidebar-close-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+
+  .chapter-tab-wrap {
+    padding: 10px 12px;
+  }
+
+  .chapter-item-card {
+    padding: 12px 14px;
+    min-height: 48px;
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "NovReader",
-  "description": "Chinese novel reader application with character name translation and TTS support",
+  "description": "Chinese novel reader application with real-time translation (VietPhrase/Han-Viet), AliceSW source parser, and serverless scraper API",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

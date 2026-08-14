@@ -2,18 +2,21 @@ import { useEffect, useState, useMemo } from 'react'
 import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
 import { useTranslateStore } from '@/stores/useTranslateStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import { loadBook, deleteBook, saveBook } from '@/lib/db'
 import { isIntroChapter } from '@/lib/parser'
 import { parseChapterTitle, formatCleanChapterTitle } from '@/lib/chineseNumerals'
 import { translator } from '@/lib/translator'
+import NovelCover from '@/components/Common/NovelCover'
 import ChapterManagerModal from './ChapterManagerModal'
 import type { Book } from '@/types'
 import './BookDetailView.css'
 
 export default function BookDetailView() {
-  const { selectedBookName, setCurrentView } = useUiStore()
+  const { selectedBookName, setCurrentView, setShowSettingsModal } = useUiStore()
   const { setBook, bookTitle: currentBookTitle, clearBook, setCurrentChapter } = useReaderStore()
   const { isDbLoaded } = useTranslateStore()
+  const { isCoverBlurred, toggleNovelBlur } = useSettingsStore()
 
   const [book, setBookData] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
@@ -114,7 +117,14 @@ export default function BookDetailView() {
             <i className="ti ti-arrow-left" /> Thư viện
           </button>
           <h2 className="bd-header-title">{book.name}</h2>
-          <div className="bd-header-placeholder" />
+          <button
+            className="btn-ghost"
+            onClick={() => setShowSettingsModal(true)}
+            title="Cài đặt giao diện & Làm mờ ảnh bìa"
+            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+          >
+            <i className="ti ti-settings" /> <span className="hide-mobile">Cài đặt</span>
+          </button>
         </div>
       </header>
 
@@ -122,17 +132,13 @@ export default function BookDetailView() {
         {/* Top Hero Section */}
         <div className="bd-hero">
           <div className="bd-cover-wrap">
-            {book.cover ? (
-              <img src={book.cover} alt={book.name} className="bd-cover-img" />
-            ) : (
-              <div className="bd-cover-fallback">
-                <div className="bd-fb-border">
-                  <span className="bd-fb-ornament">❦</span>
-                  <span className="bd-fb-title">{book.name}</span>
-                  <span className="bd-fb-badge">{book.chapters.length} chương</span>
-                </div>
-              </div>
-            )}
+            <NovelCover
+              src={book.cover}
+              alt={book.name}
+              novelIdOrName={book.name}
+              className="bd-cover-img"
+              totalChapters={book.chapters.length}
+            />
           </div>
 
           <div className="bd-info">
@@ -152,6 +158,22 @@ export default function BookDetailView() {
               {(firstRealChapterIdx > 0 || book.intro) && (
                 <button className="btn-ghost" onClick={() => handleStartRead(0)}>
                   <i className="ti ti-file-text" /> Đọc Giới thiệu (Chương 0)
+                </button>
+              )}
+
+              {/* Per-novel Cover Blur Toggle Button */}
+              {book.cover && (
+                <button
+                  className="btn-ghost"
+                  onClick={() => toggleNovelBlur(book.name)}
+                  title="Bật/Tắt làm mờ ảnh bìa cho riêng truyện này"
+                  style={{
+                    color: isCoverBlurred(book.name) ? 'var(--gold)' : 'var(--ink2)',
+                    borderColor: isCoverBlurred(book.name) ? 'var(--gold)' : 'var(--paper3)',
+                  }}
+                >
+                  <i className={isCoverBlurred(book.name) ? 'ti ti-eye-off' : 'ti ti-eye'} />{' '}
+                  {isCoverBlurred(book.name) ? 'Đang làm mờ bìa' : 'Bìa không làm mờ'}
                 </button>
               )}
 

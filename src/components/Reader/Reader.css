@@ -212,15 +212,42 @@
     display: none;
   }
   .reader-top-bar {
-    padding: 6px 10px;
+    padding: 8px 12px;
   }
   .rt-book-name {
-    max-width: 130px;
+    max-width: 140px;
+    font-size: 12px;
   }
   .reader-content-wrap {
-    padding: 20px 16px 120px;
+    padding: 18px 14px calc(90px + env(safe-area-inset-bottom, 0px));
+    max-width: 100%;
+  }
+  .chapter-heading {
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+  .chapter-body {
+    max-width: 100% !important;
+    font-size: var(--fs-reader, 16px);
+    line-height: var(--lh-reader, 1.8);
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .chapter-nav-bottom {
+    margin-top: 40px;
+    padding-top: 18px;
+    flex-direction: row;
+    gap: 8px;
   }
   .chapter-nav-bottom button {
-    flex: 1;
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 10px 8px;
+    font-size: 12.5px;
+    text-align: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 44px;
   }
 }

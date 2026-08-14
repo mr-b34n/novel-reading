@@ -1,24 +1,52 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useReaderStore } from '@/stores/useReaderStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { parseTtsWords, initTTS, stopTts } from '@/lib/tts'
 import { formatCleanChapterTitle } from '@/lib/chineseNumerals'
+import { fetchAliceChapterContent } from '@/lib/aliceswApi'
 import WelcomeScreen from './WelcomeScreen'
 import ChapterContent from './ChapterContent'
 import './Reader.css'
 
 export default function Reader() {
-  const { chapters, bookTitle, currentChapter, setCurrentChapter, setTtsWords, setChapterProgress } = useReaderStore()
+  const { chapters, bookTitle, currentChapter, setCurrentChapter, setTtsWords, setChapterProgress, updateChapterContent } = useReaderStore()
   const settings = useSettingsStore((s) => s.settings)
   const scrollRef = useRef<HTMLDivElement>(null)
   const activeChapterRef = useRef<number | null>(null)
   const activeBookRef = useRef<string | null>(null)
+  const [onlineLoading, setOnlineLoading] = useState(false)
+  const [onlineError, setOnlineError] = useState<string | null>(null)
 
   const chapter = chapters[currentChapter]
 
   useEffect(() => {
     initTTS()
   }, [])
+
+  // Auto-fetch on-demand content for online chapters if not loaded yet
+  useEffect(() => {
+    if (!chapter) return
+
+    if (chapter.sourceUrl && (chapter.content === '[Đang chờ tải...]' || !chapter.content.trim())) {
+      setOnlineLoading(true)
+      setOnlineError(null)
+      fetchAliceChapterContent(chapter.sourceUrl)
+        .then((res) => {
+          if (res.content) {
+            updateChapterContent(currentChapter, res.content)
+          } else {
+            setOnlineError('Nội dung chương trống hoặc không tải được từ nguồn.')
+          }
+        })
+        .catch((err) => {
+          console.error('Lỗi tải chương online:', err)
+          setOnlineError(err.message || 'Không thể tải nội dung chương từ AliceSW')
+        })
+        .finally(() => {
+          setOnlineLoading(false)
+        })
+    }
+  }, [currentChapter, chapter?.sourceUrl, chapter?.content, updateChapterContent])
 
   const handleScroll = () => {
     if (!scrollRef.current) return
@@ -154,7 +182,34 @@ export default function Reader() {
               settings.justify ? 'justify' : ''
             }`}
           >
-            <ChapterContent content={chapter.content} />
+            {onlineLoading ? (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink2)' }}>
+                <i className="ti ti-loader animate-spin" style={{ fontSize: '2rem', color: 'var(--gold)', marginBottom: '10px', display: 'inline-block' }} />
+                <p>Đang tải nội dung chương từ AliceSW và áp dụng bản dịch VietPhrase...</p>
+              </div>
+            ) : onlineError ? (
+              <div style={{ padding: '30px 20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', textAlign: 'center' }}>
+                <p>{onlineError}</p>
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: '10px' }}
+                  onClick={() => {
+                    if (chapter.sourceUrl) {
+                      setOnlineLoading(true)
+                      setOnlineError(null)
+                      fetchAliceChapterContent(chapter.sourceUrl)
+                        .then((res) => updateChapterContent(currentChapter, res.content))
+                        .catch((err) => setOnlineError(err.message))
+                        .finally(() => setOnlineLoading(false))
+                    }
+                  }}
+                >
+                  <i className="ti ti-refresh" /> Thử lại
+                </button>
+              </div>
+            ) : (
+              <ChapterContent content={chapter.content} />
+            )}
           </div>
 
           <div className="chapter-nav-bottom">

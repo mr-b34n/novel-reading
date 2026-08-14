@@ -5,6 +5,7 @@ import { useTranslateStore } from '@/stores/useTranslateStore'
 import { getAllBooks, saveBook } from '@/lib/db'
 import { parseTxt } from '@/lib/parser'
 import { translator } from '@/lib/translator'
+import NovelCover from '@/components/Common/NovelCover'
 import type { Book, Chapter } from '@/types'
 import './LibraryView.css'
 
@@ -246,11 +247,28 @@ export default function LibraryView() {
             )}
 
             <button
+              className="btn-ghost lib-source-btn"
+              onClick={() => useUiStore.getState().setCurrentView('source')}
+              title="Khám phá và lấy truyện từ AliceSW.com"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--gold)' }}
+            >
+              <i className="ti ti-world" /> <span className="hide-mobile">Nguồn AliceSW</span>
+            </button>
+
+            <button
               className="btn-ghost lib-dict-btn"
               onClick={() => useUiStore.getState().setShowDictModal(true)}
               title="Quản lý & Nhập dữ liệu từ điển VietPhrase / Names"
             >
               <i className="ti ti-book-download" /> <span className="hide-mobile">Từ Điển</span>
+            </button>
+
+            <button
+              className="btn-ghost lib-settings-btn"
+              onClick={() => useUiStore.getState().setShowSettingsModal(true)}
+              title="Cài đặt giao diện & Làm mờ ảnh bìa"
+            >
+              <i className="ti ti-settings" /> <span className="hide-mobile">Cài đặt</span>
             </button>
 
             <button
@@ -307,7 +325,20 @@ export default function LibraryView() {
               </div>
               <h3>Thư viện hiện chưa có truyện</h3>
               <p>Kéo & thả file .txt vào đây hoặc bấm để chọn từ thiết bị</p>
-              <span className="dropzone-badge">Hỗ trợ file .txt mã hóa UTF-8</span>
+              <div style={{ marginTop: '14px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    useUiStore.getState().setCurrentView('source')
+                  }}
+                  style={{ fontSize: '0.9rem' }}
+                >
+                  <i className="ti ti-world" /> Khám phá Nguồn AliceSW
+                </button>
+              </div>
+              <span className="dropzone-badge" style={{ marginTop: '12px' }}>Hỗ trợ file .txt mã hóa UTF-8 hoặc lấy từ AliceSW</span>
             </div>
           </div>
         ) : (
@@ -323,24 +354,13 @@ export default function LibraryView() {
                   onClick={() => openBookDetail(book.name)}
                 >
                   <div className="lib-cover">
-                    {book.cover ? (
-                      <img src={book.cover} alt={book.name} loading="lazy" />
-                    ) : (
-                      <div
-                        className="lib-cover-fallback"
-                        style={{ background: theme.bg, color: theme.text }}
-                      >
-                        <div className="fc-border" style={{ borderColor: theme.accent }}>
-                          <span className="fc-ornament" style={{ color: theme.accent }}>
-                            ❦
-                          </span>
-                          <span className="fc-title">{book.name}</span>
-                          <span className="fc-chapter-badge" style={{ backgroundColor: 'rgba(0,0,0,0.3)', color: theme.accent }}>
-                            {book.chapters.length} chương
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    <NovelCover
+                      src={book.cover}
+                      alt={book.name}
+                      novelIdOrName={book.name}
+                      fallbackTheme={theme}
+                      totalChapters={book.chapters.length}
+                    />
                   </div>
                   <div className="lib-info">
                     <h3 className="lib-book-title" title={book.name}>

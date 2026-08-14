@@ -27,6 +27,7 @@ interface ReaderStore {
   setTtsWords: (words: TtsWord[]) => void
   setTtsVoice: (v: SpeechSynthesisVoice | null) => void
   setTtsRate: (v: number) => void
+  updateChapterContent: (idx: number, content: string, title?: string) => void
   setChapterTranslation: (idx: number, tokens: any[], text?: string) => void
   clearChapterTranslation: (idx?: number) => void
   clearBook: () => void
@@ -55,6 +56,20 @@ export const useReaderStore = create<ReaderStore>()((set) => ({
   setTtsWords: (words) => set({ ttsWords: words }),
   setTtsVoice: (v) => set({ ttsVoice: v }),
   setTtsRate: (v) => set({ ttsRate: v }),
+  updateChapterContent: (idx, content, title) =>
+    set((state) => {
+      if (!state.chapters[idx]) return state
+      const next = [...state.chapters]
+      next[idx] = {
+        ...next[idx],
+        content,
+        title: title || next[idx].title,
+        translatedTokens: undefined,
+        translatedText: undefined,
+        isLoading: false,
+      }
+      return { chapters: next }
+    }),
   setChapterTranslation: (idx, tokens, text) =>
     set((state) => {
       if (!state.chapters[idx]) return state

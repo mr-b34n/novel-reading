@@ -6,6 +6,8 @@ export interface Book {
   isSangTacViet?: boolean
   enableTranslate?: boolean
   lastAccessed?: number
+  source?: string
+  aliceNovelId?: string
 }
 
 export interface Chapter {
@@ -16,6 +18,8 @@ export interface Chapter {
   customNumber?: string
   translatedTokens?: any[]
   translatedText?: string
+  sourceUrl?: string
+  isLoading?: boolean
 }
 
 export interface ReadSettings {
@@ -31,6 +35,10 @@ export interface ReadSettings {
   highlightTts: boolean
   globalDark: boolean
   swipeToChange: boolean
+  autoBlurCovers?: boolean
+  blurIntensity?: number
+  unblurOnHover?: boolean
+  unblurredNovels?: string[]
 }
 
 export interface TtsWord {
@@ -50,3 +58,40 @@ export interface DictEntry {
   category?: DictCategory
   note?: string
 }
+
+// ===================== ALICE SOURCE =====================
+export interface AliceNovelItem {
+  id: string
+  title: string
+  author: string
+  cover: string
+  category: string
+  wordCount?: string
+  views?: string
+  status?: string
+  latestChapter?: string
+  latestChapterUrl?: string
+  updateTime?: string
+  intro?: string
+  tags?: string[]
+  url: string
+}
+
+export interface AliceCategory {
+  id: string
+  name: string
+  url: string
+}
+
+export interface AliceNovelDetail extends AliceNovelItem {
+  bookmarks?: string
+  totalChapters?: number
+  fullIntro: string
+  chaptersUrl?: string
+  recentChapters: {
+    title: string
+    url: string
+    time?: string
+  }[]
+}
+

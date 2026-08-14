@@ -8,7 +8,7 @@ import {
   parseAliceChapters,
   parseAliceChapterContent,
   normalizeImgUrl,
-} from './aliceswScraper'
+} from './aliceswScraper.js'
 
 export const aliceswRouter = Router()
 

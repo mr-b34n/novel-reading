@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import { aliceswRouter } from '../src/server/routes.js'
 
 const app = express()
@@ -6,7 +6,7 @@ const app = express()
 app.use(express.json())
 
 // Enable CORS for Vercel Serverless Function
-app.use((_req, res, next) => {
+app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
@@ -21,7 +21,7 @@ app.use((_req, res, next) => {
 })
 
 // Health check
-app.get(['/api/health', '/health'], (_req, res) => {
+app.get(['/api/health', '/health'], (_req: Request, res: Response) => {
   res.json({ status: 'ok', source: 'alicesw-reader' })
 })
 

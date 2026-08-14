@@ -322,7 +322,7 @@ export async function parseAliceCategory(
 
 export async function parseAliceRank(
   type: string = 'hits_day',
-  page: number = 1
+  _page: number = 1
 ): Promise<{
   title: string
   novels: AliceNovelSummary[]

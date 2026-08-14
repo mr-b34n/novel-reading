@@ -95,7 +95,7 @@ export async function parseAliceHome(): Promise<AliceHomeData> {
 
   // 1. Categories from Nav
   const categories: AliceCategoryInfo[] = []
-  $('.nav-fenlei .fenlei-item a, .fenlei-item a').each((_, el) => {
+  $('.nav-fenlei .fenlei-item a, .fenlei-item a').each((_: number, el: any) => {
     const href = $(el).attr('href') || ''
     const name = $(el).text().trim()
     const idMatch = href.match(/\/lists\/(\d+)\.html/)
@@ -113,7 +113,7 @@ export async function parseAliceHome(): Promise<AliceHomeData> {
   const seenIds = new Set<string>()
 
   // Find all cards with novel link + image or h5/h4/h3 title
-  $('div[class*="img"], div[class*="box"], div[class*="item"], .class-img, .rec-item').each((_, el) => {
+  $('div[class*="img"], div[class*="box"], div[class*="item"], .class-img, .rec-item').each((_: number, el: any) => {
     const link = $(el).find('a[href*="/novel/"]').first()
     const href = link.attr('href') || ''
     const id = extractNovelId(href)
@@ -147,7 +147,7 @@ export async function parseAliceHome(): Promise<AliceHomeData> {
 
   // If none found with class selector, grab all novel links that contain images
   if (featured.length === 0) {
-    $('a[href*="/novel/"]').each((_, a) => {
+    $('a[href*="/novel/"]').each((_: number, a: any) => {
       const href = $(a).attr('href') || ''
       const id = extractNovelId(href)
       if (!id || seenIds.has(id)) return
@@ -176,7 +176,7 @@ export async function parseAliceHome(): Promise<AliceHomeData> {
 
   // 3. Latest novels from ul.item-index li.noxt
   const latestNovels: AliceNovelSummary[] = []
-  $('ul.item-index li.noxt').each((_, el) => {
+  $('ul.item-index li.noxt').each((_: number, el: any) => {
     const novelLink = $(el).find('a.ititle')
     const href = novelLink.attr('href') || ''
     const title = novelLink.text().trim()
@@ -212,7 +212,7 @@ export async function parseAliceHome(): Promise<AliceHomeData> {
     if (heading.length) {
       const container = heading.closest('div').next() || heading.parent()
       const novels: AliceNovelSummary[] = []
-      container.find('li').each((_, li) => {
+      container.find('li').each((_: number, li: any) => {
         const link = $(li).find('a[href*="/novel/"]').first()
         if (!link.length) return
         const href = link.attr('href') || ''
@@ -272,7 +272,7 @@ export async function parseAliceCategory(
   const categoryTitle = $('.rtit h2, .bread-crumbs li').last().text().replace('小说列表', '').trim() || 'Danh sách thể loại'
 
   const novels: AliceNovelSummary[] = []
-  $('.rec_rullist ul, .rec_rboxone ul:not(.rec_rulbox)').each((_, el) => {
+  $('.rec_rullist ul, .rec_rboxone ul:not(.rec_rulbox)').each((_: number, el: any) => {
     const novelLink = $(el).find('.two a, a[href*="/novel/"]')
     if (!novelLink.length) return
     const href = novelLink.attr('href') || ''
@@ -305,7 +305,7 @@ export async function parseAliceCategory(
 
   // Pagination detection
   let totalPage = 1
-  $('.pagination a, .layui-laypage a, .page a').each((_, el) => {
+  $('.pagination a, .layui-laypage a, .page a').each((_: number, el: any) => {
     const pNum = parseInt($(el).text().trim(), 10)
     if (!isNaN(pNum) && pNum > totalPage) {
       totalPage = pNum
@@ -332,7 +332,7 @@ export async function parseAliceRank(
   const $ = cheerio.load(html)
 
   const novels: AliceNovelSummary[] = []
-  $('.rec_rullist ul, .rank_list ul, .table-list tr').each((_, el) => {
+  $('.rec_rullist ul, .rank_list ul, .table-list tr').each((_: number, el: any) => {
     const novelLink = $(el).find('a[href*="/novel/"]')
     if (!novelLink.length) return
     const href = novelLink.attr('href') || ''
@@ -390,7 +390,7 @@ export async function parseAliceSearch(
 
   const novels: AliceNovelSummary[] = []
 
-  $('.list-group-item').each((_, el) => {
+  $('.list-group-item').each((_: number, el: any) => {
     const titleLink = $(el).find('h5 a')
     const href = titleLink.attr('href') || ''
     const rawTitle = titleLink.text().trim()
@@ -413,7 +413,7 @@ export async function parseAliceSearch(
     const intro = $(el).find('.content-txt').text().trim()
 
     const tags: string[] = []
-    $(el).find('a[href*="f=tag"]').each((_, tagEl) => {
+    $(el).find('a[href*="f=tag"]').each((_: number, tagEl: any) => {
       const t = $(tagEl).text().replace('#', '').trim()
       if (t) tags.push(t)
     })
@@ -474,7 +474,7 @@ export async function parseAliceNovel(idOrUrl: string): Promise<AliceNovelDetail
   let latestChapter = ''
   let latestChapterUrl = ''
 
-  $('.novel_info p').each((_, p) => {
+  $('.novel_info p').each((_: number, p: any) => {
     const text = $(p).text()
     if (text.includes('作 者：') || text.includes('作者：')) {
       author = $(p).find('a').text().trim() || text.replace(/作\s*者：/, '').trim()
@@ -505,7 +505,7 @@ export async function parseAliceNovel(idOrUrl: string): Promise<AliceNovelDetail
 
   // Tags
   const tags: string[] = []
-  $('.tags_list a').each((_, a) => {
+  $('.tags_list a').each((_: number, a: any) => {
     const tag = $(a).text().replace('#', '').trim()
     if (tag) tags.push(tag)
   })
@@ -515,7 +515,7 @@ export async function parseAliceNovel(idOrUrl: string): Promise<AliceNovelDetail
 
   // Recent Chapters
   const recentChapters: { title: string; url: string; time?: string }[] = []
-  $('.book_newchap .con li').each((_, li) => {
+  $('.book_newchap .con li').each((_: number, li: any) => {
     const a = $(li).find('a')
     const chTitle = a.text().trim()
     const chUrl = a.attr('href') || ''
@@ -602,7 +602,7 @@ export async function parseAliceChapters(novelIdOrUrl: string): Promise<{
   const novelTitle = $('h1, h2, .novel_title, title').first().text().replace('章节列表', '').replace('全部章节', '').trim()
 
   const chapters: AliceChapterItem[] = []
-  $('a[href*="/book/"]').each((i, el) => {
+  $('a[href*="/book/"]').each((i: number, el: any) => {
     const rawTitle = $(el).text().trim()
     const href = $(el).attr('href') || ''
     if (rawTitle && href) {
@@ -616,7 +616,7 @@ export async function parseAliceChapters(novelIdOrUrl: string): Promise<{
 
   // If no /book/ links found, try list items
   if (chapters.length === 0) {
-    $('.chapter-list a, .book_newchap a, .con a').each((i, el) => {
+    $('.chapter-list a, .book_newchap a, .con a').each((i: number, el: any) => {
       const rawTitle = $(el).text().trim()
       const href = $(el).attr('href') || ''
       if (rawTitle && href && href !== '#') {
@@ -658,7 +658,7 @@ export async function parseAliceChapterContent(chapterUrl: string): Promise<Alic
   const $clean = cheerio.load(rawHtml)
   const cleanContent = $clean.text()
     .split('\n')
-    .map((line) => line.trim())
+    .map((line: string) => line.trim())
     .filter(Boolean)
     .join('\n\n')
 

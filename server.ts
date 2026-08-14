@@ -8,13 +8,28 @@ const PORT = 3000
 
 app.use(express.json())
 
+// Enable CORS for serverless & cross-origin requests
+app.use((_req, res, next) => {
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  )
+  if (_req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+  next()
+})
+
 // Health check
-app.get('/api/health', (_req, res) => {
+app.get(['/api/health', '/health'], (_req, res) => {
   res.json({ status: 'ok', source: 'alicesw-reader' })
 })
 
-// Mount AliceSW routes
-app.use('/api/source/alicesw', aliceswRouter)
+// Mount AliceSW routes for both /api/source/alicesw and /source/alicesw
+app.use(['/api/source/alicesw', '/source/alicesw'], aliceswRouter)
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
@@ -36,8 +51,8 @@ async function startServer() {
   })
 }
 
-// Start server if run directly
-if (process.env.NODE_ENV !== 'test') {
+// Start server if run directly (and not in Vercel serverless environment)
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   startServer()
 }
 

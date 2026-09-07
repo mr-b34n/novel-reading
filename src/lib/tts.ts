@@ -119,6 +119,7 @@ export function playTts() {
   const {
     ttsWords,
     ttsCursor,
+    ttsVoice,
     ttsRate,
     setTtsPlaying,
     setTtsCursor,

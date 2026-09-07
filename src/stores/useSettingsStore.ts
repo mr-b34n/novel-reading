@@ -15,6 +15,8 @@ const DEFAULTS: ReadSettings = {
   highlightTts: true,
   globalDark: false,
   swipeToChange: true,
+  ttsEngine: 'audio',
+  keepScreenAwake: true,
   autoBlurCovers: true,
   blurIntensity: 14,
   unblurOnHover: true,

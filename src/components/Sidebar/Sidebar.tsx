@@ -3,7 +3,6 @@ import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
 import ChapterTab from './ChapterTab'
 import ReadTab from './ReadTab'
-import TtsTab from './TtsTab'
 import TranslateTab from './TranslateTab'
 import './Sidebar.css'
 
@@ -45,11 +44,6 @@ export default function Sidebar() {
             {activeTab === 'read' && (
               <div className="sb-pane active">
                 <ReadTab />
-              </div>
-            )}
-            {activeTab === 'tts' && (
-              <div className="sb-pane active">
-                <TtsTab />
               </div>
             )}
             {enableTranslate && activeTab === 'translate' && (

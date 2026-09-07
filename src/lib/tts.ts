@@ -1,15 +1,85 @@
 import { useReaderStore } from '@/stores/useReaderStore'
 import { useTranslateStore } from '@/stores/useTranslateStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import { translator } from '@/lib/translator'
 import type { TtsWord } from '@/types'
 
 // Global references for TTS
 let synth: SpeechSynthesis | null = null
 let utterance: SpeechSynthesisUtterance | null = null
+let audioPlayer: HTMLAudioElement | null = null
+let wakeLockSentinel: any = null
 
 export function initTTS() {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     synth = window.speechSynthesis
+  }
+}
+
+export async function requestWakeLock() {
+  try {
+    const keepAwake = useSettingsStore.getState().settings.keepScreenAwake ?? true
+    if (keepAwake && typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      if (!wakeLockSentinel) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen')
+      }
+    }
+  } catch (err) {
+    console.warn('Wake Lock request failed:', err)
+  }
+}
+
+export function releaseWakeLock() {
+  if (wakeLockSentinel) {
+    wakeLockSentinel.release().catch(() => {})
+    wakeLockSentinel = null
+  }
+}
+
+export function setupMediaSession() {
+  if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return
+
+  const { bookTitle, chapters, currentChapter } = useReaderStore.getState()
+  const chapter = chapters[currentChapter]
+  const chapterTitle = chapter ? (chapter.title || `Chương ${currentChapter + 1}`) : 'Chương đọc'
+
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: chapterTitle,
+      artist: bookTitle || 'NovReader',
+      album: 'NovReader TTS Reader',
+      artwork: [
+        { src: '/icon.png', sizes: '512x512', type: 'image/png' },
+      ],
+    })
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      playTts()
+    })
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      pauseTts()
+    })
+
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      const { currentChapter: curIdx } = useReaderStore.getState()
+      if (curIdx > 0) {
+        useReaderStore.getState().setCurrentChapter(curIdx - 1)
+        useReaderStore.getState().setTtsCursor(0)
+        setTimeout(() => playTts(), 200)
+      }
+    })
+
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      const { currentChapter: curIdx, chapters: chs } = useReaderStore.getState()
+      if (curIdx < chs.length - 1) {
+        useReaderStore.getState().setCurrentChapter(curIdx + 1)
+        useReaderStore.getState().setTtsCursor(0)
+        setTimeout(() => playTts(), 200)
+      }
+    })
+  } catch (err) {
+    console.warn('MediaSession setup warning:', err)
   }
 }
 
@@ -46,12 +116,9 @@ export function parseTtsWords(paragraphs: string[]): TtsWord[] {
 }
 
 export function playTts() {
-  if (!synth) return
-
   const {
     ttsWords,
     ttsCursor,
-    ttsVoice,
     ttsRate,
     setTtsPlaying,
     setTtsCursor,
@@ -65,11 +132,12 @@ export function playTts() {
     // Move to next chapter
     if (currentChapter < chapters.length - 1) {
       setCurrentChapter(currentChapter + 1)
+      setTtsCursor(0)
       setTimeout(() => {
         playTts()
       }, 500)
     } else {
-      setTtsPlaying(false)
+      stopTts()
     }
     return
   }
@@ -80,41 +148,100 @@ export function playTts() {
   // Translate text before reading if translate mode is enabled
   let textToSpeak = word.text
   if (applyDict && mode !== 'off') {
-    textToSpeak = translator.translateText(textToSpeak)
+    textToSpeak = translator.translateText(textToSpeak) || textToSpeak
   }
 
-  utterance = new SpeechSynthesisUtterance(textToSpeak)
-  if (ttsVoice) utterance.voice = ttsVoice
-  utterance.rate = ttsRate
-  utterance.lang = 'vi-VN'
+  // Set up screen wake lock & lockscreen controls
+  requestWakeLock()
+  setupMediaSession()
 
-  utterance.onend = () => {
-    setTtsCursor(ttsCursor + 1)
-    setTimeout(() => {
-      if (useReaderStore.getState().ttsPlaying) {
-        playTts()
+  // 1. Native OS Voice Engine (SpeechSynthesis with selected OS voice)
+  if (ttsVoice && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (audioPlayer) {
+      audioPlayer.pause()
+    }
+    if (!synth) {
+      synth = window.speechSynthesis
+    }
+    synth.cancel()
+
+    utterance = new SpeechSynthesisUtterance(textToSpeak)
+    utterance.voice = ttsVoice
+    utterance.rate = ttsRate || 1.0
+    utterance.lang = ttsVoice.lang || 'vi-VN'
+
+    utterance.onend = () => {
+      const state = useReaderStore.getState()
+      state.setTtsCursor(state.ttsCursor + 1)
+      if (state.ttsPlaying) {
+        setTimeout(() => playTts(), 50)
+      } else {
+        releaseWakeLock()
       }
-    }, 50)
+    }
+
+    utterance.onerror = (e) => {
+      console.error('Native SpeechSynthesis Error:', e)
+      setTtsPlaying(false)
+      releaseWakeLock()
+    }
+
+    synth.speak(utterance)
+    setTtsPlaying(true)
+    return
   }
 
-  utterance.onerror = (e) => {
-    console.error('TTS Error:', e)
+  // 2. Cloud Audio Stream Engine (Default fallback & Screen-lock background playback)
+  if (synth) synth.cancel()
+
+  if (!audioPlayer) {
+    audioPlayer = new Audio()
+  }
+
+  const ttsAudioUrl = `/api/source/alicesw/tts?text=${encodeURIComponent(textToSpeak)}&lang=vi`
+  audioPlayer.src = ttsAudioUrl
+  audioPlayer.playbackRate = ttsRate || 1.0
+
+  audioPlayer.onended = () => {
+    const state = useReaderStore.getState()
+    state.setTtsCursor(state.ttsCursor + 1)
+    if (state.ttsPlaying) {
+      setTimeout(() => playTts(), 50)
+    }
+  }
+
+  audioPlayer.onerror = (e) => {
+    console.error('Audio Stream TTS Error:', e)
     setTtsPlaying(false)
+    releaseWakeLock()
   }
 
-  synth.speak(utterance)
-  setTtsPlaying(true)
+  audioPlayer
+    .play()
+    .then(() => {
+      setTtsPlaying(true)
+    })
+    .catch((err) => {
+      console.error('Audio Stream Play Failed:', err)
+      setTtsPlaying(false)
+      releaseWakeLock()
+    })
 }
 
 export function pauseTts() {
-  if (!synth) return
-  synth.cancel()
+  if (synth) synth.cancel()
+  if (audioPlayer) audioPlayer.pause()
   useReaderStore.getState().setTtsPlaying(false)
+  releaseWakeLock()
 }
 
 export function stopTts() {
-  if (!synth) return
-  synth.cancel()
+  if (synth) synth.cancel()
+  if (audioPlayer) {
+    audioPlayer.pause()
+    audioPlayer.currentTime = 0
+  }
   useReaderStore.getState().setTtsPlaying(false)
   useReaderStore.getState().setTtsCursor(0)
+  releaseWakeLock()
 }

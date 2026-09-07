@@ -3,23 +3,24 @@ import { useUiStore } from '@/stores/useUiStore'
 import { useReaderStore } from '@/stores/useReaderStore'
 import Sidebar from '../Sidebar/Sidebar'
 import Reader from '../Reader/Reader'
+import TtsPlayerBar from '../TtsPlayer/TtsPlayerBar'
+import { stopTts } from '@/lib/tts'
 import './AppLayout.css'
 
 export default function AppLayout() {
-  const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab, setCurrentView, setShowDictModal } = useUiStore()
-  const { enableTranslate, chapterProgress } = useReaderStore()
+  const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab, setCurrentView } = useUiStore()
+  const { enableTranslate, chapterProgress, ttsActive, setTtsActive } = useReaderStore()
   const [menuExpanded, setMenuExpanded] = useState(false)
 
   const TABS = [
     { id: 'chapters', icon: 'ti-list', label: 'Danh sách chương', action: 'tab' },
     { id: 'read', icon: 'ti-text-size', label: 'Cài đặt giao diện', action: 'tab' },
-    { id: 'tts', icon: 'ti-headphones', label: 'Nghe đọc TTS', action: 'tab' },
+    { id: 'tts_toggle', icon: 'ti-headphones', label: ttsActive ? 'Tắt thanh Nghe đọc' : 'Mở thanh Nghe đọc (TTS)', action: 'tts_toggle' },
     ...(enableTranslate
       ? [
           { id: 'translate', icon: 'ti-language', label: 'Dịch thuật', action: 'tab' }
         ]
       : []),
-    { id: 'dict', icon: 'ti-book-download', label: 'Quản lý Từ điển (VP / Names)', action: 'dict' },
     { id: 'detail', icon: 'ti-info-circle', label: 'Chi tiết truyện', action: 'view' },
     { id: 'library', icon: 'ti-books', label: 'Về thư viện', action: 'view' },
   ] as const
@@ -29,8 +30,12 @@ export default function AppLayout() {
     if (item.action === 'tab') {
       setActiveTab(item.id as any)
       setSidebarOpen(true)
-    } else if (item.action === 'dict') {
-      setShowDictModal(true)
+    } else if (item.action === 'tts_toggle') {
+      const nextActive = !ttsActive
+      setTtsActive(nextActive)
+      if (!nextActive) {
+        stopTts()
+      }
     } else if (item.id === 'detail') {
       setCurrentView('detail')
     } else if (item.id === 'library') {
@@ -51,6 +56,9 @@ export default function AppLayout() {
       <main className="main-reader">
         <Reader />
       </main>
+
+      {/* Render TTS Player Bar whenever TTS is active */}
+      {ttsActive && <TtsPlayerBar />}
 
       {/* Floating Menu Overlay backdrop when menu is expanded */}
       {menuExpanded && (

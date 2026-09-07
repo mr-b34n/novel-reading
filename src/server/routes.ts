@@ -145,3 +145,36 @@ aliceswRouter.get('/proxy-image', async (req: Request, res: Response) => {
     res.status(500).send(error.message)
   }
 })
+
+// GET /api/source/alicesw/tts?text=...&lang=vi
+aliceswRouter.get('/tts', async (req: Request, res: Response) => {
+  try {
+    const text = (req.query.text as string) || ''
+    const lang = (req.query.lang as string) || 'vi'
+    if (!text.trim()) {
+      return res.status(400).send('Missing text parameter')
+    }
+
+    const cleanText = text.slice(0, 200).trim()
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${encodeURIComponent(lang)}&client=tw-ob`
+
+    const response = await fetch(ttsUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://translate.google.com/',
+      },
+    })
+
+    if (!response.ok) {
+      return res.status(response.status).send('Failed to fetch TTS audio')
+    }
+
+    res.setHeader('Content-Type', 'audio/mpeg')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    const buffer = await response.arrayBuffer()
+    res.send(Buffer.from(buffer))
+  } catch (error: any) {
+    console.error('Error in /api/source/alicesw/tts:', error)
+    res.status(500).send(error.message || 'TTS Error')
+  }
+})

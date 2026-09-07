@@ -13,14 +13,11 @@ export default function TranslateTab() {
     setApplyDict,
     activeCustomNames,
     removeUserCustomName,
-    vpCount,
-    namesCount,
-    isDbLoaded,
     triggerRetranslate,
   } = useTranslateStore()
 
   const { bookTitle, currentChapter, clearChapterTranslation } = useReaderStore()
-  const { setSidebarOpen, setShowDictModal } = useUiStore()
+  const { setSidebarOpen } = useUiStore()
 
   const handleRetranslateChapter = async () => {
     if (bookTitle && typeof currentChapter === 'number' && currentChapter >= 0) {
@@ -40,65 +37,6 @@ export default function TranslateTab() {
 
   return (
     <div style={{ paddingBottom: 20 }}>
-      {/* Dictionary Status & Reminder Banner */}
-      <div
-        style={{
-          background: 'var(--paper2)',
-          border: '1px solid var(--gold)',
-          padding: '12px',
-          borderRadius: '12px',
-          marginBottom: '16px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontWeight: 600,
-            color: 'var(--accent)',
-            marginBottom: '6px',
-            fontSize: '13.5px',
-          }}
-        >
-          <i className="ti ti-bulb" style={{ fontSize: '18px', color: 'var(--gold)' }} />
-          <span>Dữ liệu Từ điển & VietPhrase</span>
-        </div>
-        <p style={{ fontSize: '13px', color: 'var(--ink2)', margin: '0 0 10px 0', lineHeight: 1.4 }}>
-          {!isDbLoaded || vpCount === 0 ? (
-            <span>
-              ⚠️ Bạn chưa nạp dữ liệu từ điển VietPhrase/Names. Hãy bấm vào nút bên dưới để nhập từ điển giúp bản dịch chính xác, mượt mà hơn!
-            </span>
-          ) : (
-            <span>
-              ✅ Đã nạp: <strong>{vpCount.toLocaleString()}</strong> VietPhrase, <strong>{namesCount.toLocaleString()}</strong> Names.
-            </span>
-          )}
-        </p>
-        <button
-          type="button"
-          onClick={() => setShowDictModal(true)}
-          style={{
-            width: '100%',
-            padding: '9px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            fontWeight: 600,
-            fontSize: '13px',
-            borderRadius: '8px',
-            background: 'var(--gold)',
-            color: '#1a1612',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <i className="ti ti-book-download" />
-          Nhập Từ Điển (VP / Names)
-        </button>
-      </div>
-
       {/* 1. Mode Group */}
       <div className="sp-section">
         <div className="sp-label">CHẾ ĐỘ DỊCH</div>

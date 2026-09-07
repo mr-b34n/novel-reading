@@ -35,6 +35,8 @@ export interface ReadSettings {
   highlightTts: boolean
   globalDark: boolean
   swipeToChange: boolean
+  ttsEngine?: 'audio' | 'web'
+  keepScreenAwake?: boolean
   autoBlurCovers?: boolean
   blurIntensity?: number
   unblurOnHover?: boolean
